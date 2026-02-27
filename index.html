@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infiltré — Joueur</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/animations.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a0a0f; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0a0a0f] text-gray-100 font-sans">
+  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+    <!-- Écran de connexion -->
+    <div v-show="!playerId" class="w-full max-w-sm text-center">
+      <h1 class="text-2xl font-bold text-neon-green mb-2">Infiltré</h1>
+      <p class="text-gray-400 text-sm mb-6">Entre ton pseudo pour rejoindre la partie</p>
+      <input
+        v-model="playerName"
+        type="text"
+        placeholder="Ton pseudo"
+        maxlength="30"
+        class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-500 focus:border-neon-green focus:ring-1 focus:ring-neon-green outline-none mb-4"
+        @keyup.enter="join()"
+      />
+      <button
+        @click="join()"
+        :disabled="!playerName.trim()"
+        class="w-full py-3 rounded-lg bg-neon-green text-black font-semibold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        Rejoindre
+      </button>
+    </div>
+
+    <!-- Écran joueur connecté -->
+    <template v-if="playerId">
+      <!-- Agent : mission secrète -->
+      <div v-if="isAgent" class="w-full max-w-lg text-center space-y-6">
+        <p class="text-neon-green text-sm font-medium">Tu es l'agent</p>
+        <div class="p-6 rounded-xl bg-gray-800/80 border border-neon-green/50 animate-pulse-glow">
+          <p class="text-lg font-medium text-neon-green mb-2">Ta mission secrète</p>
+          <p class="text-xl text-white">{{ gameState.mission || '—' }}</p>
+        </div>
+        <p class="text-gray-500 text-sm">Ne te fais pas repérer. La révélation aura lieu à l'écran.</p>
+      </div>
+
+      <!-- Non-agent : écran d'attente -->
+      <div v-else class="w-full max-w-lg text-center space-y-6">
+        <p class="text-neon-cyan text-sm">Tu es dans la partie</p>
+        <div class="p-6 rounded-xl bg-gray-800/50 border border-gray-600">
+          <p class="text-gray-400">{{ gameState.stateMessage || 'En attente...' }}</p>
+          <p class="text-gray-500 text-sm mt-2">Observe les autres. Qui est l'agent ?</p>
+        </div>
+      </div>
+
+      <button
+        @click="leave()"
+        class="mt-8 text-sm text-gray-500 hover:text-red-400 transition"
+      >
+        Quitter la partie
+      </button>
+    </template>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          playerName: '',
+          playerId: null,
+          gameState: {}
+        };
+      },
+      computed: {
+        isAgent() {
+          return this.playerId && this.gameState.agentId === this.playerId;
+        }
+      },
+      mounted() {
+        this.playerId = sessionStorage.getItem('infiltre_player_id');
+        if (this.playerId) {
+          const unsub = InfiltreGame.onGameState((state) => {
+            this.gameState = state;
+          });
+          this._unsubGame = unsub;
+        }
+      },
+      beforeUnmount() {
+        if (this._unsubGame) this._unsubGame();
+      },
+      methods: {
+        join() {
+          const name = this.playerName.trim();
+          if (!name) return;
+          const id = InfiltreGame.joinGame(name);
+          sessionStorage.setItem('infiltre_player_id', id);
+          this.playerId = id;
+          const unsub = InfiltreGame.onGameState((state) => {
+            this.gameState = state;
+          });
+          this._unsubGame = unsub;
+        },
+        leave() {
+          if (this.playerId) {
+            InfiltreGame.leaveGame(this.playerId);
+            sessionStorage.removeItem('infiltre_player_id');
+          }
+          if (this._unsubGame) this._unsubGame();
+          this.playerId = null;
+          this.gameState = {};
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

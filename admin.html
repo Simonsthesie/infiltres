@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infiltré — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/animations.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a0a0f; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0a0a0f] text-gray-100 p-4 md:p-8">
+  <div id="app" class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold text-neon-pink mb-2">Infiltré — Maître du jeu</h1>
+    <p class="text-gray-500 text-sm mb-8">Panneau d'administration (à garder discret)</p>
+
+    <section class="mb-8">
+      <h2 class="text-lg text-neon-cyan mb-4">Joueurs connectés</h2>
+      <ul class="space-y-2">
+        <li
+          v-for="p in players"
+          :key="p.id"
+          class="flex items-center justify-between p-3 rounded-lg bg-gray-800 border border-gray-700"
+        >
+          <span class="font-medium">{{ p.name }}</span>
+          <div class="flex items-center gap-3">
+            <span v-if="gameState.agentId === p.id" class="text-neon-green text-sm">Agent</span>
+            <button
+              v-if="gameState.state === 'IDLE'"
+              @click="selectAgent(p)"
+              class="px-3 py-1 rounded bg-neon-green/20 text-neon-green hover:bg-neon-green/30 text-sm"
+            >
+              Choisir comme agent
+            </button>
+          </div>
+        </li>
+      </ul>
+      <p v-if="players.length === 0" class="text-gray-500">Aucun joueur connecté.</p>
+    </section>
+
+    <section v-if="gameState.agentId" class="mb-8 p-4 rounded-lg bg-gray-800/60 border border-gray-700">
+      <h2 class="text-lg text-neon-cyan mb-2">Mission en cours</h2>
+      <p class="text-gray-300">{{ gameState.mission || '—' }}</p>
+      <p v-if="gameState.targetName" class="text-sm text-gray-500 mt-1">Cible : {{ gameState.targetName }}</p>
+    </section>
+
+    <section class="space-y-4">
+      <template v-if="gameState.state === 'IDLE'">
+        <p class="text-gray-500">Désigne un joueur comme agent ci-dessus pour lancer une infiltration.</p>
+        <button
+          @click="resetGame()"
+          class="px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+        >
+          Réinitialiser la partie
+        </button>
+      </template>
+
+      <template v-else-if="gameState.state === 'INFILTRATION'">
+        <p class="text-gray-400">Chrono en cours. Quand tu veux révéler (ou à la fin du temps), clique ci-dessous.</p>
+        <button
+          @click="triggerReveal()"
+          class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+        >
+          Déclencher la RÉVÉLATION
+        </button>
+      </template>
+
+      <template v-else-if="gameState.state === 'REVEAL'">
+        <p class="text-gray-400">Révélation affichée sur la TV. Passe à l'étape suivante pour valider la mission.</p>
+      </template>
+
+      <template v-else-if="gameState.state === 'RESOLUTION'">
+        <p class="text-gray-400">L'agent a-t-il réussi sa mission ?</p>
+        <div class="flex gap-4">
+          <button
+            @click="resolve(true)"
+            class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
+          >
+            Succès
+          </button>
+          <button
+            @click="resolve(false)"
+            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+          >
+            Échec
+          </button>
+        </div>
+      </template>
+    </section>
+
+    <div class="mt-12 pt-8 border-t border-gray-700 text-sm text-gray-500">
+      <a href="index.html" class="text-neon-cyan hover:underline">Vue Joueur</a>
+      <span class="mx-2">·</span>
+      <a href="tv.html" class="text-neon-cyan hover:underline">Vue TV</a>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          players: [],
+          gameState: {}
+        };
+      },
+      mounted() {
+        InfiltreGame.onPlayers((list) => {
+          this.players = list;
+        });
+        InfiltreGame.onGameState((state) => {
+          this.gameState = state;
+        });
+      },
+      methods: {
+        async selectAgent(p) {
+          if (!this.players.length) return;
+          await InfiltreGame.startInfiltration(p.id, p.name, this.players);
+        },
+        triggerReveal() {
+          InfiltreGame.triggerReveal();
+        },
+        resolve(success) {
+          InfiltreGame.setResolution(success);
+          const agentId = this.gameState.agentId;
+          const leaderboard = this.gameState.leaderboard || {};
+          const agentName = this.gameState.agentName;
+          InfiltreGame.applyScoresAndReset(agentId, success, leaderboard, agentName);
+        },
+        resetGame() {
+          InfiltreGame.resetGame();
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

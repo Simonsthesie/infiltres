@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infiltré — Vue TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="css/animations.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a0a0f; }
+    .font-mono { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0a0a0f] text-gray-100 overflow-hidden">
+  <div id="app" class="min-h-screen flex flex-col p-6 md:p-10">
+    <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-neon-green">Infiltré</h1>
+      <p class="text-lg text-gray-300 max-w-2xl">{{ gameState.stateMessage }}</p>
+      <div class="font-mono text-2xl md:text-4xl text-neon-cyan tabular-nums">
+        {{ formattedTimer }}
+      </div>
+    </header>
+
+    <section class="mb-8">
+      <h2 class="text-xl text-neon-pink mb-4">Classement</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div
+          v-for="(entry, id) in leaderboardList"
+          :key="id"
+          class="flex items-center justify-between p-4 rounded-lg bg-gray-800/60 border border-gray-700"
+        >
+          <span class="font-medium text-white">{{ entry.name || 'Joueur' }}</span>
+          <div class="flex gap-4 text-sm">
+            <span class="text-neon-green">✓ {{ entry.score || 0 }}</span>
+            <span class="text-neon-pink">🍺 {{ entry.gages || 0 }}</span>
+          </div>
+        </div>
+      </div>
+      <p v-if="leaderboardList.length === 0" class="text-gray-500">Aucun score pour l'instant.</p>
+    </section>
+
+    <!-- Pop-up RÉVÉLATION -->
+    <div
+      v-show="showRevealPopup"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      @click.self="closeRevealPopup"
+    >
+      <div
+        class="reveal-popup max-w-2xl w-full p-8 md:p-12 rounded-2xl bg-gray-900 border-2 border-neon-green shadow-2xl"
+        :class="{ 'reveal-trigger': revealTrigger }"
+      >
+        <p class="text-neon-pink text-sm uppercase tracking-wider mb-4">Révélation</p>
+        <p class="text-gray-400 mb-2">L'agent était</p>
+        <p class="reveal-agent-name text-3xl md:text-4xl font-bold text-neon-green mb-6">
+          {{ gameState.agentName || '—' }}
+        </p>
+        <p class="text-gray-400 mb-2">Sa mission était</p>
+        <p class="reveal-mission text-xl md:text-2xl text-white leading-relaxed">
+          {{ gameState.mission || '—' }}
+        </p>
+        <button
+          @click="closeRevealPopup"
+          class="mt-8 px-6 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          gameState: {},
+          timerInterval: null,
+          now: Date.now(),
+          showRevealPopup: false,
+          revealTrigger: false
+        };
+      },
+      computed: {
+        leaderboardList() {
+          const lb = this.gameState.leaderboard || {};
+          return Object.entries(lb)
+            .map(([id, v]) => ({ id, name: v.name, score: v.score, gages: v.gages }))
+            .sort((a, b) => (b.score || 0) - (a.score || 0));
+        },
+        formattedTimer() {
+          const state = this.gameState.state;
+          const revealAt = this.gameState.revealAt;
+          if (state !== InfiltreGame.STATES.INFILTRATION || !revealAt) {
+            return '--:--';
+          }
+          const remaining = Math.max(0, Math.floor((revealAt - this.now) / 1000));
+          const m = Math.floor(remaining / 60);
+          const s = remaining % 60;
+          return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+      },
+      watch: {
+        'gameState.state'(newState) {
+          if (newState === InfiltreGame.STATES.REVEAL) {
+            this.showRevealPopup = true;
+            this.revealTrigger = true;
+            setTimeout(() => {
+              if (typeof confetti === 'function') {
+                confetti({ particleCount: 80, spread: 60 });
+              }
+            }, 400);
+          }
+        }
+      },
+      mounted() {
+        InfiltreGame.onGameState((state) => {
+          this.gameState = state;
+        });
+        this.timerInterval = setInterval(() => {
+          this.now = Date.now();
+        }, 1000);
+      },
+      beforeUnmount() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+      },
+      methods: {
+        closeRevealPopup() {
+          this.showRevealPopup = false;
+          this.revealTrigger = false;
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

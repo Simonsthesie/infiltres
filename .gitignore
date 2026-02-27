@@ -1,0 +1,16 @@
+# Config Firebase (clés / infos sensibles) — ne jamais committer
+js/firebase-config.js
+
+# OS / éditeur
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Logs / dépendances si tu en ajoutes plus tard
+node_modules/
+*.log
+.env
+.env.local
