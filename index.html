@@ -23,7 +23,7 @@
   </style>
 </head>
 <body class="min-h-screen bg-[#0a0a0f] text-gray-100 font-sans">
-  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
     <!-- Écran de connexion -->
     <div v-show="!playerId" class="w-full max-w-sm text-center">
       <h1 class="text-2xl font-bold text-neon-green mb-2">Infiltré</h1>
@@ -47,6 +47,9 @@
 
     <!-- Écran joueur connecté -->
     <template v-if="playerId">
+      <p class="absolute top-4 left-4 right-4 text-center text-gray-500 text-sm">
+        Je suis <span class="text-neon-cyan font-medium">{{ displayName }}</span>
+      </p>
       <!-- Agent : mission secrète -->
       <div v-if="isAgent" class="w-full max-w-lg text-center space-y-6">
         <p class="text-neon-green text-sm font-medium">Tu es l'agent</p>
@@ -151,6 +154,11 @@
         otherPlayers() {
           if (!this.players.length || !this.playerId) return [];
           return this.players.filter(p => p.id !== this.playerId);
+        },
+        displayName() {
+          if (this.playerName) return this.playerName;
+          const me = this.players.find(p => p.id === this.playerId);
+          return (me && me.name) || '...';
         },
         alreadyGrillWinner() {
           return this.gameState.grillWinner && this.gameState.grillWinner !== this.playerId;
