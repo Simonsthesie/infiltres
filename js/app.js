@@ -249,11 +249,18 @@
     const state = current.state;
     if (state !== STATES.INFILTRATION && state !== STATES.PAUSED) return { ok: false, reason: 'not_in_mission' };
     if (current.grillWinner) return { ok: false, reason: 'already_guessed' };
-    if (current.agentId !== guessedPlayerId) return { ok: false, reason: 'wrong' };
     const leaderboard = { ...(current.leaderboard || {}) };
     const key = (guesserName && String(guesserName).trim()) ? String(guesserName).trim() : guesserId;
     const entry = leaderboard[key] || { name: guesserName || '', score: 0, gages: 0 };
     entry.name = guesserName || entry.name;
+
+    if (current.agentId !== guessedPlayerId) {
+      entry.score = Math.max(0, (entry.score || 0) - 3);
+      leaderboard[key] = entry;
+      await gameRef().update({ leaderboard });
+      return { ok: false, reason: 'wrong', points: -3 };
+    }
+
     entry.score = (entry.score || 0) + 2;
     leaderboard[key] = entry;
     await gameRef().update({ grillWinner: guesserId, leaderboard });

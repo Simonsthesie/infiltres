@@ -220,7 +220,7 @@
               this.grillSelectedId = '';
             }, 1500);
           } else if (result.reason === 'wrong') {
-            this.grillFeedback = { ok: false, message: 'Faux ! Ce n\'est pas l\'agent.' };
+            this.grillFeedback = { ok: false, message: 'Faux ! Ce n\'est pas l\'agent. -3 points.' };
           } else if (result.reason === 'already_guessed') {
             this.grillFeedback = { ok: false, message: 'Quelqu\'un a déjà trouvé ce round.' };
           } else {
