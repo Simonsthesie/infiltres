@@ -36,16 +36,7 @@
           class="flex items-center justify-between p-3 rounded-lg bg-gray-800 border border-gray-700"
         >
           <span class="font-medium">{{ p.name }}</span>
-          <div class="flex items-center gap-3">
-            <span v-if="gameState.agentId === p.id" class="text-neon-green text-sm">Agent</span>
-            <button
-              v-if="gameState.state === 'IDLE'"
-              @click="selectAgent(p)"
-              class="px-3 py-1 rounded bg-neon-green/20 text-neon-green hover:bg-neon-green/30 text-sm"
-            >
-              Choisir comme agent
-            </button>
-          </div>
+          <span v-if="gameState.agentId === p.id" class="text-neon-green text-sm">Agent</span>
         </li>
       </ul>
       <p v-if="players.length === 0" class="text-gray-500">Aucun joueur connecté.</p>
@@ -59,9 +50,9 @@
 
     <section class="space-y-4">
       <template v-if="gameState.state === 'IDLE'">
-        <p class="text-gray-500">Désigne un joueur comme agent pour lancer une manche.</p>
+        <p class="text-gray-500">Un agent sera désigné au hasard parmi les joueurs connectés à chaque manche.</p>
         <button
-          @click="showLaunchModal = true"
+          @click="launchWithRandomAgent()"
           :disabled="players.length === 0"
           class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
@@ -132,39 +123,6 @@
       </template>
     </section>
 
-    <!-- Modal Lancer la partie -->
-    <div
-      v-if="showLaunchModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
-      @click.self="showLaunchModal = false"
-    >
-      <div class="max-w-md w-full p-6 rounded-xl bg-gray-900 border border-neon-cyan shadow-2xl">
-        <h3 class="text-xl font-bold text-neon-cyan mb-4">Qui est l'agent ?</h3>
-        <p class="text-gray-400 text-sm mb-4">Choisis le joueur qui aura la mission secrète.</p>
-        <ul class="space-y-2 mb-6">
-          <li
-            v-for="p in players"
-            :key="p.id"
-            class="flex items-center justify-between p-3 rounded-lg bg-gray-800 border border-gray-700"
-          >
-            <span class="font-medium">{{ p.name }}</span>
-            <button
-              @click="chooseAgentAndClose(p)"
-              class="px-3 py-1 rounded bg-neon-green/20 text-neon-green hover:bg-neon-green/30 text-sm"
-            >
-              Désigner comme agent
-            </button>
-          </li>
-        </ul>
-        <button
-          @click="showLaunchModal = false"
-          class="w-full py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
-        >
-          Annuler
-        </button>
-      </div>
-    </div>
-
     <!-- Modal Tout réinitialiser -->
     <div
       v-if="showResetAllModal"
@@ -211,7 +169,6 @@
         return {
           players: [],
           gameState: {},
-          showLaunchModal: false,
           showResetAllModal: false
         };
       },
@@ -224,13 +181,10 @@
         });
       },
       methods: {
-        async selectAgent(p) {
+        async launchWithRandomAgent() {
           if (!this.players.length) return;
+          const p = this.players[Math.floor(Math.random() * this.players.length)];
           await InfiltreGame.startInfiltration(p.id, p.name, this.players);
-        },
-        async chooseAgentAndClose(p) {
-          await this.selectAgent(p);
-          this.showLaunchModal = false;
         },
         triggerReveal() {
           InfiltreGame.triggerReveal();
