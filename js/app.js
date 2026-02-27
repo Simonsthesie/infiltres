@@ -12,6 +12,7 @@
   const STATES = {
     IDLE: 'IDLE',
     INFILTRATION: 'INFILTRATION',
+    PAUSED: 'PAUSED',
     REVEAL: 'REVEAL',
     RESOLUTION: 'RESOLUTION'
   };
@@ -19,6 +20,7 @@
   const STATE_MESSAGES = {
     IDLE: 'En attente des joueurs...',
     INFILTRATION: 'Un agent est en mission secrète... Gardez l\'œil ouvert.',
+    PAUSED: 'Partie en pause.',
     REVEAL: 'Révélation en cours...',
     RESOLUTION: 'Mission terminée. Distribution des points.'
   };
@@ -135,6 +137,31 @@
     });
   }
 
+  async function pauseGame() {
+    const snap = await gameRef().once('value');
+    const current = snap.val();
+    if (!current || current.state !== STATES.INFILTRATION || !current.revealAt) return;
+    const remainingSeconds = Math.max(0, (current.revealAt - Date.now()) / 1000);
+    return gameRef().update({
+      state: STATES.PAUSED,
+      stateMessage: STATE_MESSAGES.PAUSED,
+      remainingSeconds: Math.round(remainingSeconds)
+    });
+  }
+
+  async function resumeGame() {
+    const snap = await gameRef().once('value');
+    const current = snap.val();
+    if (!current || current.state !== STATES.PAUSED) return;
+    const remaining = (current.remainingSeconds || 0) * 1000;
+    return gameRef().update({
+      state: STATES.INFILTRATION,
+      stateMessage: STATE_MESSAGES.INFILTRATION,
+      revealAt: Date.now() + remaining,
+      remainingSeconds: null
+    });
+  }
+
   function setResolution(success) {
     return gameRef().update({
       state: STATES.RESOLUTION,
@@ -145,14 +172,15 @@
 
   function applyScoresAndReset(agentId, success, leaderboard, agentName) {
     const nextLeaderboard = { ...(leaderboard || {}) };
-    const agentEntry = nextLeaderboard[agentId] || { name: agentName || '', score: 0, gages: 0 };
+    const key = (agentName && String(agentName).trim()) ? String(agentName).trim() : agentId;
+    const agentEntry = nextLeaderboard[key] || { name: agentName || '', score: 0, gages: 0 };
     if (agentName) agentEntry.name = agentName;
     if (success) {
       agentEntry.score = (agentEntry.score || 0) + 1;
     } else {
       agentEntry.gages = (agentEntry.gages || 0) + 1;
     }
-    nextLeaderboard[agentId] = agentEntry;
+    nextLeaderboard[key] = agentEntry;
 
     return gameRef().set({
       ...getInitialGameState(),
@@ -167,6 +195,17 @@
   }
 
   function resetGame() {
+    return gameRef().once('value').then(snap => {
+      const current = snap.val();
+      const leaderboard = (current && current.leaderboard) ? current.leaderboard : {};
+      return gameRef().set({
+        ...getInitialGameState(),
+        leaderboard
+      });
+    });
+  }
+
+  function resetGameAndScores() {
     return gameRef().set(getInitialGameState());
   }
 
@@ -183,9 +222,12 @@
     onGameState,
     startInfiltration,
     triggerReveal,
+    pauseGame,
+    resumeGame,
     setResolution,
     applyScoresAndReset,
     getGameState,
-    resetGame
+    resetGame,
+    resetGameAndScores
   };
 })(typeof window !== 'undefined' ? window : this);

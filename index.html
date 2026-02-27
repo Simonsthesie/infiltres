@@ -27,7 +27,7 @@
     <!-- Écran de connexion -->
     <div v-show="!playerId" class="w-full max-w-sm text-center">
       <h1 class="text-2xl font-bold text-neon-green mb-2">Infiltré</h1>
-      <p class="text-gray-400 text-sm mb-6">Entre ton pseudo pour rejoindre la partie</p>
+      <p class="text-gray-400 text-sm mb-6">Entre ton pseudo pour rejoindre la partie. Tu peux rejoindre ou quitter à tout moment, la partie continue et ton score est conservé.</p>
       <input
         v-model="playerName"
         type="text"
@@ -72,6 +72,7 @@
       >
         Quitter la partie
       </button>
+      <p class="mt-2 text-xs text-gray-600">Tu peux revenir plus tard avec le même pseudo, ton score restera.</p>
     </template>
   </div>
 

@@ -59,22 +59,53 @@
 
     <section class="space-y-4">
       <template v-if="gameState.state === 'IDLE'">
-        <p class="text-gray-500">Désigne un joueur comme agent ci-dessus pour lancer une infiltration.</p>
+        <p class="text-gray-500">Désigne un joueur comme agent pour lancer une manche.</p>
+        <button
+          @click="showLaunchModal = true"
+          :disabled="players.length === 0"
+          class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Lancer la partie
+        </button>
         <button
           @click="resetGame()"
-          class="px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+          class="ml-4 px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
         >
-          Réinitialiser la partie
+          Réinitialiser la manche
+        </button>
+        <button
+          @click="confirmResetAll()"
+          class="ml-4 px-4 py-2 rounded-lg bg-red-900/50 text-red-300 hover:bg-red-900/70 border border-red-700"
+        >
+          Tout réinitialiser (partie + scores)
         </button>
       </template>
 
       <template v-else-if="gameState.state === 'INFILTRATION'">
         <p class="text-gray-400">Chrono en cours. Quand tu veux révéler (ou à la fin du temps), clique ci-dessous.</p>
+        <div class="flex flex-wrap gap-3">
+          <button
+            @click="triggerReveal()"
+            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+          >
+            Déclencher la RÉVÉLATION
+          </button>
+          <button
+            @click="pauseGame()"
+            class="px-6 py-3 rounded-lg bg-amber-600 text-white font-semibold hover:opacity-90"
+          >
+            Mettre en pause
+          </button>
+        </div>
+      </template>
+
+      <template v-else-if="gameState.state === 'PAUSED'">
+        <p class="text-gray-400">La partie est en pause. Le chrono reprendra quand tu cliqueras sur Reprendre.</p>
         <button
-          @click="triggerReveal()"
-          class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+          @click="resumeGame()"
+          class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
         >
-          Déclencher la RÉVÉLATION
+          Reprendre
         </button>
       </template>
 
@@ -101,6 +132,65 @@
       </template>
     </section>
 
+    <!-- Modal Lancer la partie -->
+    <div
+      v-if="showLaunchModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      @click.self="showLaunchModal = false"
+    >
+      <div class="max-w-md w-full p-6 rounded-xl bg-gray-900 border border-neon-cyan shadow-2xl">
+        <h3 class="text-xl font-bold text-neon-cyan mb-4">Qui est l'agent ?</h3>
+        <p class="text-gray-400 text-sm mb-4">Choisis le joueur qui aura la mission secrète.</p>
+        <ul class="space-y-2 mb-6">
+          <li
+            v-for="p in players"
+            :key="p.id"
+            class="flex items-center justify-between p-3 rounded-lg bg-gray-800 border border-gray-700"
+          >
+            <span class="font-medium">{{ p.name }}</span>
+            <button
+              @click="chooseAgentAndClose(p)"
+              class="px-3 py-1 rounded bg-neon-green/20 text-neon-green hover:bg-neon-green/30 text-sm"
+            >
+              Désigner comme agent
+            </button>
+          </li>
+        </ul>
+        <button
+          @click="showLaunchModal = false"
+          class="w-full py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Tout réinitialiser -->
+    <div
+      v-if="showResetAllModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      @click.self="showResetAllModal = false"
+    >
+      <div class="max-w-md w-full p-6 rounded-xl bg-gray-900 border border-red-500 shadow-2xl">
+        <h3 class="text-xl font-bold text-red-400 mb-4">Tout réinitialiser ?</h3>
+        <p class="text-gray-400 text-sm mb-6">La partie repassera en attente et tous les scores seront remis à zéro. Les joueurs connectés restent listés.</p>
+        <div class="flex gap-3">
+          <button
+            @click="resetGameAndScores(); showResetAllModal = false"
+            class="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-500"
+          >
+            Oui, tout réinitialiser
+          </button>
+          <button
+            @click="showResetAllModal = false"
+            class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-12 pt-8 border-t border-gray-700 text-sm text-gray-500">
       <a href="index.html" class="text-neon-cyan hover:underline">Vue Joueur</a>
       <span class="mx-2">·</span>
@@ -120,7 +210,9 @@
       data() {
         return {
           players: [],
-          gameState: {}
+          gameState: {},
+          showLaunchModal: false,
+          showResetAllModal: false
         };
       },
       mounted() {
@@ -136,6 +228,10 @@
           if (!this.players.length) return;
           await InfiltreGame.startInfiltration(p.id, p.name, this.players);
         },
+        async chooseAgentAndClose(p) {
+          await this.selectAgent(p);
+          this.showLaunchModal = false;
+        },
         triggerReveal() {
           InfiltreGame.triggerReveal();
         },
@@ -148,6 +244,18 @@
         },
         resetGame() {
           InfiltreGame.resetGame();
+        },
+        confirmResetAll() {
+          this.showResetAllModal = true;
+        },
+        resetGameAndScores() {
+          InfiltreGame.resetGameAndScores();
+        },
+        pauseGame() {
+          InfiltreGame.pauseGame();
+        },
+        resumeGame() {
+          InfiltreGame.resumeGame();
         }
       }
     }).mount('#app');

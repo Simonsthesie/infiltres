@@ -38,8 +38,8 @@
       <h2 class="text-xl text-neon-pink mb-4">Classement</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         <div
-          v-for="(entry, id) in leaderboardList"
-          :key="id"
+          v-for="(entry, index) in leaderboardList"
+          :key="entry.name + index"
           class="flex items-center justify-between p-4 rounded-lg bg-gray-800/60 border border-gray-700"
         >
           <span class="font-medium text-white">{{ entry.name || 'Joueur' }}</span>
@@ -102,13 +102,24 @@
       computed: {
         leaderboardList() {
           const lb = this.gameState.leaderboard || {};
-          return Object.entries(lb)
-            .map(([id, v]) => ({ id, name: v.name, score: v.score, gages: v.gages }))
-            .sort((a, b) => (b.score || 0) - (a.score || 0));
+          const byName = {};
+          for (const [key, v] of Object.entries(lb)) {
+            const name = (v && v.name) ? String(v.name).trim() : key;
+            if (!byName[name]) byName[name] = { name, score: 0, gages: 0 };
+            byName[name].score += v.score || 0;
+            byName[name].gages += v.gages || 0;
+          }
+          return Object.values(byName).sort((a, b) => (b.score || 0) - (a.score || 0));
         },
         formattedTimer() {
           const state = this.gameState.state;
           const revealAt = this.gameState.revealAt;
+          const remainingSeconds = this.gameState.remainingSeconds;
+          if (state === InfiltreGame.STATES.PAUSED && remainingSeconds != null) {
+            const m = Math.floor(remainingSeconds / 60);
+            const s = Math.floor(remainingSeconds % 60);
+            return m + ':' + (s < 10 ? '0' : '') + s;
+          }
           if (state !== InfiltreGame.STATES.INFILTRATION || !revealAt) {
             return '--:--';
           }
