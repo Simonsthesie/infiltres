@@ -140,14 +140,19 @@
         },
         leaderboardList() {
           const lb = this.gameState.leaderboard || {};
-          const byName = {};
-          for (const [key, v] of Object.entries(lb)) {
-            const name = (v && v.name) ? String(v.name).trim() : key;
-            if (!byName[name]) byName[name] = { name, score: 0, gages: 0 };
-            byName[name].score += v.score || 0;
-            byName[name].gages += v.gages || 0;
+          const byKey = {};
+          for (const p of this.players) {
+            const key = (p.name && String(p.name).trim()) || p.id;
+            if (!key) continue;
+            byKey[key] = { name: p.name || 'Joueur', score: 0, gages: 0 };
           }
-          return Object.values(byName).sort((a, b) => (b.score || 0) - (a.score || 0));
+          for (const [id, v] of Object.entries(lb)) {
+            const key = (v && v.name && String(v.name).trim()) ? String(v.name).trim() : id;
+            if (!byKey[key]) byKey[key] = { name: (v && v.name) ? String(v.name).trim() : id, score: 0, gages: 0 };
+            byKey[key].score += (v && v.score) || 0;
+            byKey[key].gages += (v && v.gages) || 0;
+          }
+          return Object.values(byKey).sort((a, b) => (b.score || 0) - (a.score || 0));
         },
         formattedTimer() {
           const state = this.gameState.state;

@@ -191,7 +191,7 @@
           this.players = list;
         });
         InfiltreGame.onGameState((state) => {
-          this.gameState = state;
+          this.gameState = typeof state === 'object' && state !== null ? { ...state } : {};
         });
       },
       methods: {
@@ -203,12 +203,13 @@
         triggerReveal() {
           InfiltreGame.triggerReveal();
         },
-        resolve(success) {
-          InfiltreGame.setResolution(success);
+        async resolve(success) {
           const agentId = this.gameState.agentId;
-          const leaderboard = this.gameState.leaderboard || {};
           const agentName = this.gameState.agentName;
-          InfiltreGame.applyScoresAndReset(agentId, success, leaderboard, agentName, true);
+          const leaderboard = this.gameState.leaderboard || {};
+          if (!agentId && !agentName) return;
+          await InfiltreGame.setResolution(success);
+          await InfiltreGame.applyScoresAndReset(agentId, success, leaderboard, agentName, true);
         },
         resetGame() {
           InfiltreGame.resetGame();
