@@ -26,13 +26,38 @@
 </head>
 <body class="min-h-screen bg-[#0a0a0f] text-gray-100 overflow-hidden">
   <div id="app" class="min-h-screen flex flex-col p-6 md:p-10">
-    <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
       <h1 class="text-2xl md:text-3xl font-bold text-neon-green">Infiltré</h1>
-      <p class="text-lg text-gray-300 max-w-2xl">{{ gameState.stateMessage }}</p>
+      <p class="text-lg text-gray-300 max-w-2xl">{{ statusMessage }}</p>
       <div class="font-mono text-2xl md:text-4xl text-neon-cyan tabular-nums">
         {{ formattedTimer }}
       </div>
     </header>
+
+    <!-- Bannière Mission en cours -->
+    <section
+      v-if="isMissionActive"
+      class="mb-8 p-6 rounded-xl bg-neon-green/10 border-2 border-neon-green text-center"
+    >
+      <p class="text-neon-green font-bold text-xl md:text-2xl mb-2">Mission en cours</p>
+      <p class="text-gray-300 mb-2">{{ gameState.stateMessage }}</p>
+      <p class="font-mono text-3xl md:text-4xl text-neon-cyan">{{ formattedTimer }}</p>
+    </section>
+
+    <!-- Joueurs connectés -->
+    <section class="mb-8">
+      <h2 class="text-xl text-neon-cyan mb-4">Joueurs connectés ({{ players.length }})</h2>
+      <div class="flex flex-wrap gap-2">
+        <span
+          v-for="p in players"
+          :key="p.id"
+          class="px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white"
+        >
+          {{ p.name }}
+        </span>
+      </div>
+      <p v-if="players.length === 0" class="text-gray-500">Aucun joueur pour l'instant.</p>
+    </section>
 
     <section class="mb-8">
       <h2 class="text-xl text-neon-pink mb-4">Classement</h2>
@@ -93,6 +118,7 @@
       data() {
         return {
           gameState: {},
+          players: [],
           timerInterval: null,
           now: Date.now(),
           showRevealPopup: false,
@@ -100,6 +126,15 @@
         };
       },
       computed: {
+        statusMessage() {
+          const msg = this.gameState.stateMessage;
+          if (msg) return msg;
+          return this.gameState.state ? 'Chargement...' : 'En attente de la partie...';
+        },
+        isMissionActive() {
+          const s = this.gameState.state;
+          return s === InfiltreGame.STATES.INFILTRATION || s === InfiltreGame.STATES.PAUSED;
+        },
         leaderboardList() {
           const lb = this.gameState.leaderboard || {};
           const byName = {};
@@ -144,7 +179,10 @@
       },
       mounted() {
         InfiltreGame.onGameState((state) => {
-          this.gameState = state;
+          this.gameState = typeof state === 'object' && state !== null ? { ...state } : {};
+        });
+        InfiltreGame.onPlayers((list) => {
+          this.players = list || [];
         });
         this.timerInterval = setInterval(() => {
           this.now = Date.now();
