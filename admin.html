@@ -101,7 +101,21 @@
       </template>
 
       <template v-else-if="gameState.state === 'REVEAL'">
-        <p class="text-gray-400">Révélation affichée sur la TV. Passe à l'étape suivante pour valider la mission.</p>
+        <p class="text-gray-400">La mission est terminée. L'agent se dénonce à l'oral. Valide ci-dessous.</p>
+        <div class="flex gap-4">
+          <button
+            @click="resolve(true)"
+            class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
+          >
+            Succès
+          </button>
+          <button
+            @click="resolve(false)"
+            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+          >
+            Échec
+          </button>
+        </div>
       </template>
 
       <template v-else-if="gameState.state === 'RESOLUTION'">
@@ -194,7 +208,7 @@
           const agentId = this.gameState.agentId;
           const leaderboard = this.gameState.leaderboard || {};
           const agentName = this.gameState.agentName;
-          InfiltreGame.applyScoresAndReset(agentId, success, leaderboard, agentName);
+          InfiltreGame.applyScoresAndReset(agentId, success, leaderboard, agentName, true);
         },
         resetGame() {
           InfiltreGame.resetGame();

@@ -111,7 +111,7 @@
   async function startInfiltration(agentId, agentName, players) {
     await loadMissions();
     const { mission, targetName } = pickRandomMission(players, agentId);
-    const durationSeconds = 10;
+    const durationSeconds = 30;
     const startedAt = Date.now();
     const revealAt = startedAt + durationSeconds * 1000;
     const current = await gameRef().once('value').then(s => s.val());
@@ -136,8 +136,35 @@
   function triggerReveal() {
     return gameRef().update({
       state: STATES.REVEAL,
-      stateMessage: STATE_MESSAGES.REVEAL
+      stateMessage: STATE_MESSAGES.REVEAL,
+      revealStartedAt: Date.now()
     });
+  }
+
+  const REVEAL_TIMEOUT_MS = 5 * 60 * 1000;
+
+  async function checkRevealTimeout() {
+    const snap = await gameRef().once('value');
+    const current = snap.val();
+    if (!current || current.state !== STATES.REVEAL) return;
+    if (current.revealTimeoutTriggered) return;
+    const startedAt = current.revealStartedAt || 0;
+    if (Date.now() - startedAt < REVEAL_TIMEOUT_MS) return;
+
+    const updated = await gameRef().transaction((c) => {
+      if (!c || c.state !== STATES.REVEAL || c.revealTimeoutTriggered) return;
+      if (!c.revealStartedAt || Date.now() - c.revealStartedAt < REVEAL_TIMEOUT_MS) return;
+      return { ...c, revealTimeoutTriggered: true };
+    });
+
+    if (updated.committed && updated.snapshot.val() && updated.snapshot.val().revealTimeoutTriggered) {
+      const playersSnap = await playersRef().once('value');
+      const playersList = playersSnap.val() ? Object.entries(playersSnap.val()).map(([k, v]) => ({ id: k, ...v })) : [];
+      if (playersList.length > 0) {
+        const newAgent = playersList[Math.floor(Math.random() * playersList.length)];
+        await startInfiltration(newAgent.id, newAgent.name, playersList);
+      }
+    }
   }
 
   async function pauseGame() {
@@ -173,7 +200,7 @@
     });
   }
 
-  function applyScoresAndReset(agentId, success, leaderboard, agentName) {
+  async function applyScoresAndReset(agentId, success, leaderboard, agentName, autoStartNext) {
     const nextLeaderboard = { ...(leaderboard || {}) };
     const key = (agentName && String(agentName).trim()) ? String(agentName).trim() : agentId;
     const agentEntry = nextLeaderboard[key] || { name: agentName || '', score: 0, gages: 0 };
@@ -185,12 +212,21 @@
     }
     nextLeaderboard[key] = agentEntry;
 
-    return gameRef().set({
+    await gameRef().set({
       ...getInitialGameState(),
       leaderboard: nextLeaderboard,
       state: STATES.IDLE,
       stateMessage: STATE_MESSAGES.IDLE
     });
+
+    if (autoStartNext) {
+      const playersSnap = await playersRef().once('value');
+      const playersList = playersSnap.val() ? Object.entries(playersSnap.val()).map(([k, v]) => ({ id: k, ...v })) : [];
+      if (playersList.length > 0) {
+        const newAgent = playersList[Math.floor(Math.random() * playersList.length)];
+        await startInfiltration(newAgent.id, newAgent.name, playersList);
+      }
+    }
   }
 
   async function submitGrill(guesserId, guesserName, guessedPlayerId) {
@@ -257,6 +293,8 @@
     submitGrill,
     getGameState,
     resetGame,
-    resetGameAndScores
+    resetGameAndScores,
+    checkRevealTimeout,
+    REVEAL_TIMEOUT_MS
   };
 })(typeof window !== 'undefined' ? window : this);
