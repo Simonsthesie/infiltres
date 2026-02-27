@@ -72,6 +72,7 @@
       targetName: null,
       revealAt: null,
       startedAt: null,
+      durationSeconds: 30,
       durationMinutes: 30,
       resolution: null,
       grillWinner: null,
@@ -112,10 +113,9 @@
     await loadMissions();
     const { mission, targetName } = pickRandomMission(players, agentId);
     const durationSeconds = 30;
-    const startedAt = Date.now();
-    const revealAt = startedAt + durationSeconds * 1000;
     const current = await gameRef().once('value').then(s => s.val());
     const leaderboard = (current && current.leaderboard) ? current.leaderboard : {};
+    const ServerTimestamp = global.firebase && global.firebase.database && global.firebase.database.ServerValue && global.firebase.database.ServerValue.TIMESTAMP;
 
     await gameRef().set({
       state: STATES.INFILTRATION,
@@ -124,13 +124,23 @@
       agentName,
       mission,
       targetName: targetName || null,
-      startedAt,
-      revealAt,
+      startedAt: ServerTimestamp || Date.now(),
+      durationSeconds,
       durationMinutes: durationSeconds / 60,
       resolution: null,
       grillWinner: null,
       leaderboard
     });
+
+    if (ServerTimestamp) {
+      const snap = await gameRef().once('value');
+      const val = snap.val();
+      const startedAt = val && val.startedAt && typeof val.startedAt === 'number' ? val.startedAt : Date.now();
+      await gameRef().update({ revealAt: startedAt + durationSeconds * 1000 });
+    } else {
+      const startedAt = Date.now();
+      await gameRef().update({ revealAt: startedAt + durationSeconds * 1000, startedAt });
+    }
   }
 
   function triggerReveal() {
@@ -170,8 +180,11 @@
   async function pauseGame() {
     const snap = await gameRef().once('value');
     const current = snap.val();
-    if (!current || current.state !== STATES.INFILTRATION || !current.revealAt) return;
-    const remainingSeconds = Math.max(0, (current.revealAt - Date.now()) / 1000);
+    if (!current || current.state !== STATES.INFILTRATION) return;
+    const revealAt = current.revealAt ?? (current.startedAt != null && (current.durationSeconds != null || current.durationMinutes != null)
+      ? current.startedAt + ((current.durationSeconds ?? (current.durationMinutes * 60)) * 1000) : null);
+    if (!revealAt) return;
+    const remainingSeconds = Math.max(0, (revealAt - Date.now()) / 1000);
     return gameRef().update({
       state: STATES.PAUSED,
       stateMessage: STATE_MESSAGES.PAUSED,

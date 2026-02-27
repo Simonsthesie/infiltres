@@ -123,6 +123,7 @@
           players: [],
           timerInterval: null,
           revealTimeoutInterval: null,
+          serverTimeOffset: 0,
           now: Date.now(),
           showRevealPopup: false,
           revealTrigger: false
@@ -156,20 +157,27 @@
         },
         formattedTimer() {
           const state = this.gameState.state;
-          const revealAt = this.gameState.revealAt;
           const remainingSeconds = this.gameState.remainingSeconds;
           if (state === InfiltreGame.STATES.PAUSED && remainingSeconds != null) {
             const m = Math.floor(remainingSeconds / 60);
             const s = Math.floor(remainingSeconds % 60);
             return m + ':' + (s < 10 ? '0' : '') + s;
           }
-          if (state !== InfiltreGame.STATES.INFILTRATION || !revealAt) {
-            return '--:--';
-          }
-          const remaining = Math.max(0, Math.floor((revealAt - this.now) / 1000));
+          if (state !== InfiltreGame.STATES.INFILTRATION) return '--:--';
+          const revealAt = this.effectiveRevealAt;
+          if (!revealAt) return '--:--';
+          const serverNow = this.now + (this.serverTimeOffset || 0);
+          const remaining = Math.max(0, Math.floor((revealAt - serverNow) / 1000));
           const m = Math.floor(remaining / 60);
           const s = remaining % 60;
           return m + ':' + (s < 10 ? '0' : '') + s;
+        },
+        effectiveRevealAt() {
+          const g = this.gameState;
+          if (g.revealAt != null) return g.revealAt;
+          const dur = g.durationSeconds != null ? g.durationSeconds : (g.durationMinutes != null ? g.durationMinutes * 60 : null);
+          if (g.startedAt != null && dur != null) return g.startedAt + dur * 1000;
+          return null;
         }
       },
       watch: {
@@ -189,6 +197,13 @@
         }
       },
       mounted() {
+        const db = typeof FIREBASE_DB !== 'undefined' ? FIREBASE_DB : (window.FIREBASE_DB);
+        if (db && db.ref) {
+          db.ref('.info/serverTimeOffset').on('value', (snap) => {
+            const v = snap.val();
+            this.serverTimeOffset = typeof v === 'number' ? v : 0;
+          });
+        }
         InfiltreGame.onGameState((state) => {
           this.gameState = typeof state === 'object' && state !== null ? { ...state } : {};
         });
@@ -197,7 +212,9 @@
         });
         this.timerInterval = setInterval(() => {
           this.now = Date.now();
-          if (this.gameState.state === InfiltreGame.STATES.INFILTRATION && this.gameState.revealAt && this.now >= this.gameState.revealAt) {
+          const revealAt = this.effectiveRevealAt;
+          const serverNow = this.now + (this.serverTimeOffset || 0);
+          if (this.gameState.state === InfiltreGame.STATES.INFILTRATION && revealAt != null && serverNow >= revealAt) {
             InfiltreGame.triggerReveal();
           }
         }, 1000);
