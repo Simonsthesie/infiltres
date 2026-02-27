@@ -48,8 +48,9 @@
     const list = players.filter(p => p.id !== excludePlayerId);
     const target = list.length ? list[Math.floor(Math.random() * list.length)] : null;
     const missions = missionsCache.length ? missionsCache : [];
-    const mission = missions[Math.floor(Math.random() * missions.length)] || 'Mission secrète';
-    const resolved = resolveMissionText(mission, target?.name);
+    const raw = missions[Math.floor(Math.random() * missions.length)];
+    const missionText = typeof raw === 'string' ? raw : (raw && raw.text) || 'Mission secrète';
+    const resolved = resolveMissionText(missionText, target?.name);
     return { mission: resolved, targetId: target?.id || null, targetName: target?.name || null };
   }
 
@@ -73,6 +74,7 @@
       startedAt: null,
       durationMinutes: 30,
       resolution: null,
+      grillWinner: null,
       leaderboard: {}
     };
   }
@@ -109,9 +111,9 @@
   async function startInfiltration(agentId, agentName, players) {
     await loadMissions();
     const { mission, targetName } = pickRandomMission(players, agentId);
-    const durationMinutes = 30;
+    const durationSeconds = 10;
     const startedAt = Date.now();
-    const revealAt = startedAt + durationMinutes * 60 * 1000;
+    const revealAt = startedAt + durationSeconds * 1000;
     const current = await gameRef().once('value').then(s => s.val());
     const leaderboard = (current && current.leaderboard) ? current.leaderboard : {};
 
@@ -124,8 +126,9 @@
       targetName: targetName || null,
       startedAt,
       revealAt,
-      durationMinutes,
+      durationMinutes: durationSeconds / 60,
       resolution: null,
+      grillWinner: null,
       leaderboard
     });
   }
@@ -190,6 +193,31 @@
     });
   }
 
+  async function submitGrill(guesserId, guesserName, guessedPlayerId) {
+    const snap = await gameRef().once('value');
+    const current = snap.val();
+    if (!current) return { ok: false, reason: 'no_state' };
+    const state = current.state;
+    if (state !== STATES.INFILTRATION && state !== STATES.PAUSED) return { ok: false, reason: 'not_in_mission' };
+    if (current.grillWinner) return { ok: false, reason: 'already_guessed' };
+    if (current.agentId !== guessedPlayerId) return { ok: false, reason: 'wrong' };
+    const leaderboard = { ...(current.leaderboard || {}) };
+    const key = (guesserName && String(guesserName).trim()) ? String(guesserName).trim() : guesserId;
+    const entry = leaderboard[key] || { name: guesserName || '', score: 0, gages: 0 };
+    entry.name = guesserName || entry.name;
+    entry.score = (entry.score || 0) + 2;
+    leaderboard[key] = entry;
+    await gameRef().update({ grillWinner: guesserId, leaderboard });
+
+    const playersSnap = await playersRef().once('value');
+    const playersList = playersSnap.val() ? Object.entries(playersSnap.val()).map(([k, v]) => ({ id: k, ...v })) : [];
+    if (playersList.length > 0) {
+      const newAgent = playersList[Math.floor(Math.random() * playersList.length)];
+      await startInfiltration(newAgent.id, newAgent.name, playersList);
+    }
+    return { ok: true, points: 2 };
+  }
+
   function getGameState() {
     return gameRef().once('value').then(snap => snap.val() || getInitialGameState());
   }
@@ -226,6 +254,7 @@
     resumeGame,
     setResolution,
     applyScoresAndReset,
+    submitGrill,
     getGameState,
     resetGame,
     resetGameAndScores

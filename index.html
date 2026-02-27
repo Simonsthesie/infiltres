@@ -64,6 +64,50 @@
           <p class="text-gray-400">{{ gameState.stateMessage || 'En attente...' }}</p>
           <p class="text-gray-500 text-sm mt-2">Observe les autres. Qui est l'agent ?</p>
         </div>
+        <div v-if="canGrill" class="space-y-2">
+          <button
+            @click="showGrillModal = true"
+            :disabled="otherPlayers.length === 0"
+            class="px-6 py-3 rounded-lg bg-neon-pink/20 text-neon-pink border border-neon-pink font-semibold hover:bg-neon-pink/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            J'ai grillé...
+          </button>
+          <p v-if="alreadyGrillWinner" class="text-xs text-gray-500">Quelqu'un a déjà trouvé l'agent ce round.</p>
+        </div>
+      </div>
+
+      <!-- Modal J'ai grillé -->
+      <div
+        v-if="showGrillModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+        @click.self="showGrillModal = false"
+      >
+        <div class="max-w-sm w-full p-6 rounded-xl bg-gray-900 border border-neon-pink shadow-2xl">
+          <h3 class="text-lg font-bold text-neon-pink mb-4">Qui est l'agent ?</h3>
+          <select
+            v-model="grillSelectedId"
+            class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white mb-4"
+          >
+            <option value="">Choisir un joueur</option>
+            <option v-for="p in otherPlayers" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </select>
+          <p v-if="grillFeedback" class="text-sm mb-4" :class="grillFeedback.ok ? 'text-neon-green' : 'text-red-400'">{{ grillFeedback.message }}</p>
+          <div class="flex gap-3">
+            <button
+              @click="confirmGrill()"
+              :disabled="!grillSelectedId"
+              class="flex-1 py-2 rounded-lg bg-neon-pink text-white font-semibold disabled:opacity-50"
+            >
+              Valider
+            </button>
+            <button
+              @click="showGrillModal = false; grillFeedback = null"
+              class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
       </div>
 
       <button
@@ -89,21 +133,40 @@
         return {
           playerName: '',
           playerId: null,
-          gameState: {}
+          gameState: {},
+          players: [],
+          showGrillModal: false,
+          grillSelectedId: '',
+          grillFeedback: null
         };
       },
       computed: {
         isAgent() {
           return this.playerId && this.gameState.agentId === this.playerId;
+        },
+        canGrill() {
+          const s = this.gameState.state;
+          return (s === 'INFILTRATION' || s === 'PAUSED') && !this.isAgent && !this.gameState.grillWinner;
+        },
+        otherPlayers() {
+          if (!this.players.length || !this.playerId) return [];
+          return this.players.filter(p => p.id !== this.playerId);
+        },
+        alreadyGrillWinner() {
+          return this.gameState.grillWinner && this.gameState.grillWinner !== this.playerId;
         }
       },
       mounted() {
         this.playerId = sessionStorage.getItem('infiltre_player_id');
+        this.playerName = sessionStorage.getItem('infiltre_player_name') || '';
         if (this.playerId) {
-          const unsub = InfiltreGame.onGameState((state) => {
-            this.gameState = state;
+          InfiltreGame.onGameState((state) => {
+            this.gameState = typeof state === 'object' && state !== null ? { ...state } : {};
           });
-          this._unsubGame = unsub;
+          InfiltreGame.onPlayers((list) => {
+            this.players = list || [];
+          });
+          this._unsubGame = true;
         }
       },
       beforeUnmount() {
@@ -115,20 +178,46 @@
           if (!name) return;
           const id = InfiltreGame.joinGame(name);
           sessionStorage.setItem('infiltre_player_id', id);
+          sessionStorage.setItem('infiltre_player_name', name);
           this.playerId = id;
-          const unsub = InfiltreGame.onGameState((state) => {
-            this.gameState = state;
+          InfiltreGame.onGameState((state) => {
+            this.gameState = typeof state === 'object' && state !== null ? { ...state } : {};
           });
-          this._unsubGame = unsub;
+          InfiltreGame.onPlayers((list) => {
+            this.players = list || [];
+          });
+          this._unsubGame = true;
         },
         leave() {
           if (this.playerId) {
             InfiltreGame.leaveGame(this.playerId);
             sessionStorage.removeItem('infiltre_player_id');
+            sessionStorage.removeItem('infiltre_player_name');
           }
           if (this._unsubGame) this._unsubGame();
           this.playerId = null;
+          this.playerName = '';
           this.gameState = {};
+          this.players = [];
+        },
+        async confirmGrill() {
+          if (!this.grillSelectedId || !this.playerId) return;
+          const name = this.playerName || sessionStorage.getItem('infiltre_player_name') || '';
+          const result = await InfiltreGame.submitGrill(this.playerId, name, this.grillSelectedId);
+          if (result.ok) {
+            this.grillFeedback = { ok: true, message: 'Bravo ! +2 points.' };
+            setTimeout(() => {
+              this.showGrillModal = false;
+              this.grillFeedback = null;
+              this.grillSelectedId = '';
+            }, 1500);
+          } else if (result.reason === 'wrong') {
+            this.grillFeedback = { ok: false, message: 'Faux ! Ce n\'est pas l\'agent.' };
+          } else if (result.reason === 'already_guessed') {
+            this.grillFeedback = { ok: false, message: 'Quelqu\'un a déjà trouvé ce round.' };
+          } else {
+            this.grillFeedback = { ok: false, message: 'Impossible pour l\'instant.' };
+          }
         }
       }
     }).mount('#app');
