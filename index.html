@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Infiltré — Joueur</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/animations.css">
   <script>
     tailwind.config = {
@@ -12,66 +13,72 @@
       theme: {
         extend: {
           colors: {
-            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff', amber: '#ffb800' }
+          },
+          fontFamily: {
+            display: ['Orbitron', 'sans-serif'],
+            body: ['Outfit', 'system-ui', 'sans-serif']
           }
         }
       }
     }
   </script>
   <style>
-    body { background: #0a0a0f; }
+    body { background: #050508; }
   </style>
 </head>
-<body class="min-h-screen bg-[#0a0a0f] text-gray-100 font-sans">
-  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+<body class="min-h-screen text-gray-100 font-body antialiased safe-top safe-bottom">
+  <div id="app" class="min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:p-6 relative box-border">
     <!-- Écran de connexion -->
-    <div v-show="!playerId" class="w-full max-w-sm text-center">
-      <h1 class="text-2xl font-bold text-neon-green mb-2">Infiltré</h1>
-      <p class="text-gray-400 text-sm mb-6">Entre ton pseudo pour rejoindre la partie. Tu peux rejoindre ou quitter à tout moment, la partie continue et ton score est conservé.</p>
-      <input
-        v-model="playerName"
-        type="text"
-        placeholder="Ton pseudo"
-        maxlength="30"
-        class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-500 focus:border-neon-green focus:ring-1 focus:ring-neon-green outline-none mb-4"
-        @keyup.enter="join()"
-      />
-      <button
-        @click="join()"
-        :disabled="!playerName.trim()"
-        class="w-full py-3 rounded-lg bg-neon-green text-black font-semibold hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        Rejoindre
-      </button>
+    <div v-show="!playerId" class="w-full max-w-md text-center">
+      <h1 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-hero mb-2 sm:mb-3">Infiltré</h1>
+      <p class="text-gray-400 text-xs sm:text-sm mb-6 sm:mb-8 max-w-sm mx-auto px-1">Entre ton pseudo pour rejoindre la partie. Tu peux rejoindre ou quitter à tout moment, la partie continue et ton score est conservé.</p>
+      <div class="glass-card p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-white/10 space-y-3 sm:space-y-4">
+        <input
+          v-model="playerName"
+          type="text"
+          placeholder="Ton pseudo"
+          maxlength="30"
+          class="input-neon w-full px-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl text-base"
+          @keyup.enter="join()"
+        />
+        <button
+          @click="join()"
+          :disabled="!playerName.trim()"
+          class="btn-glow-green w-full py-3 sm:py-3.5 rounded-lg sm:rounded-xl text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Rejoindre
+        </button>
+      </div>
     </div>
 
     <!-- Écran joueur connecté -->
     <template v-if="playerId">
-      <p class="absolute top-4 left-4 right-4 text-center text-gray-500 text-sm">
-        Je suis <span class="text-neon-cyan font-medium">{{ displayName }}</span>
+      <p class="absolute top-4 left-3 right-3 sm:left-4 sm:right-4 text-center text-gray-400 text-xs sm:text-sm truncate">
+        Je suis <span class="text-neon-cyan font-semibold drop-shadow-[0_0_8px_rgba(0,212,255,0.5)]">{{ displayName }}</span>
       </p>
       <!-- Agent : mission secrète -->
-      <div v-if="isAgent" class="w-full max-w-lg text-center space-y-6">
-        <p class="text-neon-green text-sm font-medium">Tu es l'agent</p>
-        <div class="p-6 rounded-xl bg-gray-800/80 border border-neon-green/50 animate-pulse-glow">
-          <p class="text-lg font-medium text-neon-green mb-2">Ta mission secrète</p>
-          <p class="text-xl text-white">{{ gameState.mission || '—' }}</p>
+      <div v-if="isAgent" class="w-full max-w-lg text-center space-y-4 sm:space-y-6 px-2">
+        <p class="text-neon-green text-xs sm:text-sm font-display font-semibold uppercase tracking-wider">Tu es l'agent</p>
+        <div class="glass-card p-5 sm:p-8 rounded-xl sm:rounded-2xl border-2 border-neon-green/50 animate-pulse-glow shadow-[0_0_40px_rgba(0,255,136,0.15)]">
+          <p class="text-neon-green font-display font-bold text-base sm:text-lg mb-2 sm:mb-3 uppercase tracking-wide">Ta mission secrète</p>
+          <p class="text-base sm:text-xl text-white leading-relaxed break-words">{{ gameState.mission || '—' }}</p>
         </div>
-        <p class="text-gray-500 text-sm">Ne te fais pas repérer. La révélation aura lieu à l'écran.</p>
+        <p class="text-gray-500 text-xs sm:text-sm">Ne te fais pas repérer. La révélation aura lieu à l'écran.</p>
       </div>
 
       <!-- Non-agent : écran d'attente -->
-      <div v-else class="w-full max-w-lg text-center space-y-6">
-        <p class="text-neon-cyan text-sm">Tu es dans la partie</p>
-        <div class="p-6 rounded-xl bg-gray-800/50 border border-gray-600">
-          <p class="text-gray-400">{{ gameState.stateMessage || 'En attente...' }}</p>
-          <p class="text-gray-500 text-sm mt-2">Observe les autres. Qui est l'agent ?</p>
+      <div v-else class="w-full max-w-lg text-center space-y-4 sm:space-y-6 px-2">
+        <p class="text-neon-cyan text-xs sm:text-sm font-display font-medium uppercase tracking-wider">Tu es dans la partie</p>
+        <div class="glass-card p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-neon-cyan/20">
+          <p class="text-gray-300 text-sm sm:text-base">{{ gameState.stateMessage || 'En attente...' }}</p>
+          <p class="text-gray-500 text-xs sm:text-sm mt-2">Observe les autres. Qui est l'agent ?</p>
         </div>
         <div v-if="canGrill" class="space-y-2">
           <button
             @click="showGrillModal = true"
             :disabled="otherPlayers.length === 0"
-            class="px-6 py-3 rounded-lg bg-neon-pink/20 text-neon-pink border border-neon-pink font-semibold hover:bg-neon-pink/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-glow-pink w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl font-display text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             J'ai grillé...
           </button>
@@ -82,30 +89,30 @@
       <!-- Modal J'ai grillé -->
       <div
         v-if="showGrillModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm safe-bottom"
         @click.self="showGrillModal = false"
       >
-        <div class="max-w-sm w-full p-6 rounded-xl bg-gray-900 border border-neon-pink shadow-2xl">
-          <h3 class="text-lg font-bold text-neon-pink mb-4">Qui est l'agent ?</h3>
+        <div class="glass-card w-full sm:max-w-sm sm:max-h-[90vh] p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl border-2 border-neon-pink/50 shadow-[0_0_60px_rgba(255,0,128,0.2)] overflow-y-auto">
+          <h3 class="font-display text-lg sm:text-xl font-bold text-neon-pink mb-3 sm:mb-4">Qui est l'agent ?</h3>
           <select
             v-model="grillSelectedId"
-            class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white mb-4"
+            class="input-neon w-full px-4 py-3 rounded-xl mb-3 sm:mb-4 text-base"
           >
             <option value="">Choisir un joueur</option>
             <option v-for="p in otherPlayers" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
-          <p v-if="grillFeedback" class="text-sm mb-4" :class="grillFeedback.ok ? 'text-neon-green' : 'text-red-400'">{{ grillFeedback.message }}</p>
+          <p v-if="grillFeedback" class="text-sm mb-3 sm:mb-4 font-medium min-h-[1.25rem]" :class="grillFeedback.ok ? 'text-neon-green' : 'text-red-400'">{{ grillFeedback.message }}</p>
           <div class="flex gap-3">
             <button
               @click="confirmGrill()"
               :disabled="!grillSelectedId"
-              class="flex-1 py-2 rounded-lg bg-neon-pink text-white font-semibold disabled:opacity-50"
+              class="btn-glow-pink flex-1 py-2.5 rounded-xl font-display text-sm sm:text-base disabled:opacity-50"
             >
               Valider
             </button>
             <button
               @click="showGrillModal = false; grillFeedback = null"
-              class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300"
+              class="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20 transition font-medium text-sm sm:text-base"
             >
               Annuler
             </button>
@@ -115,11 +122,11 @@
 
       <button
         @click="leave()"
-        class="mt-8 text-sm text-gray-500 hover:text-red-400 transition"
+        class="mt-6 sm:mt-8 text-sm text-gray-500 hover:text-red-400 transition font-medium safe-bottom"
       >
         Quitter la partie
       </button>
-      <p class="mt-2 text-xs text-gray-600">Tu peux revenir plus tard avec le même pseudo, ton score restera.</p>
+      <p class="mt-2 text-xs text-gray-600 px-2">Tu peux revenir plus tard avec le même pseudo, ton score restera.</p>
     </template>
   </div>
 

@@ -1,0 +1,186 @@
+/* Infiltré — Thème coloré et immersif */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --neon-green: #00ff88;
+  --neon-pink: #ff0080;
+  --neon-cyan: #00d4ff;
+  --neon-amber: #ffb800;
+  --neon-purple: #bf00ff;
+  --bg-deep: #050508;
+  --bg-card: rgba(15, 15, 25, 0.85);
+  --bg-card-border: rgba(255, 255, 255, 0.08);
+  --glow-green: 0 0 30px rgba(0, 255, 136, 0.4), 0 0 60px rgba(0, 255, 136, 0.2);
+  --glow-pink: 0 0 30px rgba(255, 0, 128, 0.4), 0 0 60px rgba(255, 0, 128, 0.2);
+  --glow-cyan: 0 0 30px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.2);
+  --gradient-hero: linear-gradient(135deg, #0a0a12 0%, #0f0f1a 25%, #120a18 50%, #0a0f18 75%, #0a0a12 100%);
+  --gradient-mesh: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 255, 136, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(255, 0, 128, 0.08), transparent),
+    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(0, 212, 255, 0.1), transparent);
+  --gradient-btn-green: linear-gradient(135deg, #00ff88 0%, #00cc6a 50%, #00ff88 100%);
+  --gradient-btn-pink: linear-gradient(135deg, #ff0080 0%, #cc0066 50%, #ff0080 100%);
+  --gradient-btn-cyan: linear-gradient(135deg, #00d4ff 0%, #00a8cc 50%, #00d4ff 100%);
+  --gradient-text-hero: linear-gradient(90deg, #00ff88, #00d4ff, #ff0080);
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  background-image: var(--gradient-hero), var(--gradient-mesh);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: #e2e8f0;
+}
+
+.font-display, h1, .title-display { font-family: var(--font-display); letter-spacing: 0.02em; }
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.btn-glow-green {
+  background: var(--gradient-btn-green);
+  background-size: 200% 200%;
+  color: #000;
+  font-weight: 600;
+  font-family: var(--font-display);
+  border: none;
+  box-shadow: var(--glow-green);
+  transition: transform 0.2s, box-shadow 0.3s, background-position 0.5s;
+}
+.btn-glow-green:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 255, 136, 0.25);
+  background-position: 100% 50%;
+}
+.btn-glow-green:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-glow-pink {
+  background: var(--gradient-btn-pink);
+  background-size: 200% 200%;
+  color: #fff;
+  font-weight: 600;
+  font-family: var(--font-display);
+  border: none;
+  box-shadow: var(--glow-pink);
+  transition: transform 0.2s, box-shadow 0.3s, background-position 0.5s;
+}
+.btn-glow-pink:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(255, 0, 128, 0.5), 0 0 80px rgba(255, 0, 128, 0.25);
+  background-position: 100% 50%;
+}
+
+.input-neon {
+  background: rgba(15, 15, 25, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-neon::placeholder { color: rgba(255, 255, 255, 0.35); }
+.input-neon:focus {
+  outline: none;
+  border-color: var(--neon-green);
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2);
+}
+
+.text-gradient-hero {
+  background: var(--gradient-text-hero);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: theme-gradient-shift 6s ease infinite;
+}
+
+@keyframes theme-gradient-shift {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+.timer-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  letter-spacing: 0.1em;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.5), transparent);
+}
+.section-title-pink { color: #ff0080; }
+.section-title-pink::after { background: linear-gradient(90deg, rgba(255, 0, 128, 0.5), transparent); }
+.section-title-green { color: var(--neon-green); }
+.section-title-green::after { background: linear-gradient(90deg, rgba(0, 255, 136, 0.5), transparent); }
+
+.badge-player {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.06) 100%);
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.12);
+}
+
+.banner-mission {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
+  border: 2px solid rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 40px rgba(0, 255, 136, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-row {
+  background: rgba(15, 15, 25, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.leaderboard-row:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.1);
+}
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .glass-card { border-radius: 1rem; padding: 1rem; }
+  .section-title { font-size: 0.75rem; letter-spacing: 0.1em; }
+  .timer-display { font-size: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .section-title::after { display: none; }
+  .btn-glow-green, .btn-glow-pink { padding: 0.75rem 1rem; font-size: 0.9rem; }
+}
+
+/* Safe area pour encoches / barre de navigation mobile */
+@supports (padding: max(0px)) {
+  .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .safe-top { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+}

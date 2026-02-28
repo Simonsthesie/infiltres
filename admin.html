@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Infiltré — Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/animations.css">
   <script>
     tailwind.config = {
@@ -12,78 +13,79 @@
       theme: {
         extend: {
           colors: {
-            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
-          }
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff', amber: '#ffb800' }
+          },
+          fontFamily: { display: ['Orbitron', 'sans-serif'], body: ['Outfit', 'system-ui', 'sans-serif'] }
         }
       }
     }
   </script>
-  <style>
-    body { background: #0a0a0f; }
-  </style>
+  <style> body { background: #050508; } </style>
 </head>
-<body class="min-h-screen bg-[#0a0a0f] text-gray-100 p-4 md:p-8">
-  <div id="app" class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold text-neon-pink mb-2">Infiltré — Maître du jeu</h1>
-    <p class="text-gray-500 text-sm mb-8">Panneau d'administration (à garder discret)</p>
+<body class="min-h-screen text-gray-100 p-4 sm:p-6 md:p-8 font-body antialiased safe-top safe-bottom">
+  <div id="app" class="max-w-4xl mx-auto w-full box-border">
+    <h1 class="font-display text-2xl sm:text-3xl font-bold text-gradient-hero mb-1">Infiltré — Maître du jeu</h1>
+    <p class="text-gray-500 text-xs sm:text-sm mb-6 sm:mb-8">Panneau d'administration (à garder discret)</p>
 
-    <section class="mb-8">
-      <h2 class="text-lg text-neon-cyan mb-4">Joueurs connectés</h2>
+    <section class="mb-6 sm:mb-8">
+      <h2 class="section-title">Joueurs connectés</h2>
       <ul class="space-y-2">
         <li
           v-for="p in players"
           :key="p.id"
-          class="flex items-center justify-between p-3 rounded-lg bg-gray-800 border border-gray-700"
+          class="glass-card flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl gap-2"
         >
-          <span class="font-medium">{{ p.name }}</span>
-          <span v-if="gameState.agentId === p.id" class="text-neon-green text-sm">Agent</span>
+          <span class="font-medium text-white text-sm sm:text-base truncate min-w-0">{{ p.name }}</span>
+          <span v-if="gameState.agentId === p.id" class="text-neon-green font-display text-xs sm:text-sm font-semibold uppercase tracking-wider shrink-0">Agent</span>
         </li>
       </ul>
-      <p v-if="players.length === 0" class="text-gray-500">Aucun joueur connecté.</p>
+      <p v-if="players.length === 0" class="text-gray-500 text-sm">Aucun joueur connecté.</p>
     </section>
 
-    <section v-if="gameState.agentId" class="mb-8 p-4 rounded-lg bg-gray-800/60 border border-gray-700">
-      <h2 class="text-lg text-neon-cyan mb-2">Mission en cours</h2>
-      <p class="text-gray-300">{{ gameState.mission || '—' }}</p>
-      <p v-if="gameState.targetName" class="text-sm text-gray-500 mt-1">Cible : {{ gameState.targetName }}</p>
+    <section v-if="gameState.agentId" class="glass-card mb-6 sm:mb-8 p-4 sm:p-5 rounded-lg sm:rounded-xl border border-neon-cyan/20">
+      <h2 class="section-title section-title-green mb-2">Mission en cours</h2>
+      <p class="text-gray-300 text-base sm:text-lg break-words">{{ gameState.mission || '—' }}</p>
+      <p v-if="gameState.targetName" class="text-sm text-gray-500 mt-2">Cible : {{ gameState.targetName }}</p>
     </section>
 
     <section class="space-y-4">
       <template v-if="gameState.state === 'IDLE'">
-        <p class="text-gray-500">Un agent sera désigné au hasard parmi les joueurs connectés à chaque manche.</p>
-        <button
-          @click="launchWithRandomAgent()"
-          :disabled="players.length === 0"
-          class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          Lancer la partie
-        </button>
-        <button
-          @click="resetGame()"
-          class="ml-4 px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
-        >
-          Réinitialiser la manche
-        </button>
-        <button
-          @click="confirmResetAll()"
-          class="ml-4 px-4 py-2 rounded-lg bg-red-900/50 text-red-300 hover:bg-red-900/70 border border-red-700"
-        >
-          Tout réinitialiser (partie + scores)
-        </button>
+        <p class="text-gray-400 text-sm sm:text-base mb-4">Un agent sera désigné au hasard parmi les joueurs connectés à chaque manche.</p>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+          <button
+            @click="launchWithRandomAgent()"
+            :disabled="players.length === 0"
+            class="btn-glow-green w-full sm:w-auto px-6 py-3 rounded-xl font-display text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Lancer la partie
+          </button>
+          <button
+            @click="resetGame()"
+            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20 hover:border-neon-cyan/40 transition font-medium text-sm sm:text-base"
+          >
+            Réinitialiser la manche
+          </button>
+          <button
+            @click="confirmResetAll()"
+            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-red-500/20 text-red-300 border border-red-500/50 hover:bg-red-500/30 transition font-medium text-sm sm:text-base"
+          >
+            Tout réinitialiser (partie + scores)
+          </button>
+        </div>
       </template>
 
       <template v-else-if="gameState.state === 'INFILTRATION'">
-        <p class="text-gray-400">Chrono en cours. Quand tu veux révéler (ou à la fin du temps), clique ci-dessous.</p>
-        <div class="flex flex-wrap gap-3">
+        <p class="text-gray-400 text-sm sm:text-base mb-4">Chrono en cours. Quand tu veux révéler (ou à la fin du temps), clique ci-dessous.</p>
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3">
           <button
             @click="triggerReveal()"
-            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+            class="btn-glow-pink w-full sm:w-auto px-6 py-3 rounded-xl font-display text-sm sm:text-base"
           >
             Déclencher la RÉVÉLATION
           </button>
           <button
             @click="pauseGame()"
-            class="px-6 py-3 rounded-lg bg-amber-600 text-white font-semibold hover:opacity-90"
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500/90 text-black font-display font-semibold text-sm sm:text-base hover:bg-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.3)] transition"
           >
             Mettre en pause
           </button>
@@ -91,27 +93,27 @@
       </template>
 
       <template v-else-if="gameState.state === 'PAUSED'">
-        <p class="text-gray-400">La partie est en pause. Le chrono reprendra quand tu cliqueras sur Reprendre.</p>
+        <p class="text-gray-400 text-sm sm:text-base mb-4">La partie est en pause. Le chrono reprendra quand tu cliqueras sur Reprendre.</p>
         <button
           @click="resumeGame()"
-          class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
+          class="btn-glow-green w-full sm:w-auto px-6 py-3 rounded-xl font-display text-sm sm:text-base"
         >
           Reprendre
         </button>
       </template>
 
       <template v-else-if="gameState.state === 'REVEAL'">
-        <p class="text-gray-400">La mission est terminée. L'agent se dénonce à l'oral. Valide ci-dessous.</p>
-        <div class="flex gap-4">
+        <p class="text-gray-400 text-sm sm:text-base mb-4">La mission est terminée. L'agent se dénonce à l'oral. Valide ci-dessous.</p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             @click="resolve(true)"
-            class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
+            class="btn-glow-green w-full sm:flex-1 px-6 py-3 rounded-xl font-display text-sm sm:text-base"
           >
             Succès
           </button>
           <button
             @click="resolve(false)"
-            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+            class="btn-glow-pink w-full sm:flex-1 px-6 py-3 rounded-xl font-display text-sm sm:text-base"
           >
             Échec
           </button>
@@ -119,17 +121,17 @@
       </template>
 
       <template v-else-if="gameState.state === 'RESOLUTION'">
-        <p class="text-gray-400">L'agent a-t-il réussi sa mission ?</p>
-        <div class="flex gap-4">
+        <p class="text-gray-400 text-sm sm:text-base mb-4">L'agent a-t-il réussi sa mission ?</p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             @click="resolve(true)"
-            class="px-6 py-3 rounded-lg bg-neon-green text-black font-semibold hover:opacity-90"
+            class="btn-glow-green w-full sm:flex-1 px-6 py-3 rounded-xl font-display text-sm sm:text-base"
           >
             Succès
           </button>
           <button
             @click="resolve(false)"
-            class="px-6 py-3 rounded-lg bg-neon-pink text-white font-semibold hover:opacity-90"
+            class="btn-glow-pink w-full sm:flex-1 px-6 py-3 rounded-xl font-display text-sm sm:text-base"
           >
             Échec
           </button>
@@ -140,33 +142,33 @@
     <!-- Modal Tout réinitialiser -->
     <div
       v-if="showResetAllModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm safe-bottom overflow-y-auto"
       @click.self="showResetAllModal = false"
     >
-      <div class="max-w-md w-full p-6 rounded-xl bg-gray-900 border border-red-500 shadow-2xl">
-        <h3 class="text-xl font-bold text-red-400 mb-4">Tout réinitialiser ?</h3>
-        <p class="text-gray-400 text-sm mb-6">La partie repassera en attente et tous les scores seront remis à zéro. Les joueurs connectés restent listés.</p>
-        <div class="flex gap-3">
-          <button
-            @click="resetGameAndScores(); showResetAllModal = false"
-            class="flex-1 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-500"
-          >
-            Oui, tout réinitialiser
-          </button>
+      <div class="glass-card w-full sm:max-w-md p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl border-2 border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.2)]">
+        <h3 class="font-display text-lg sm:text-xl font-bold text-red-400 mb-3 sm:mb-4">Tout réinitialiser ?</h3>
+        <p class="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">La partie repassera en attente et tous les scores seront remis à zéro. Les joueurs connectés restent listés.</p>
+        <div class="flex flex-col-reverse sm:flex-row gap-3">
           <button
             @click="showResetAllModal = false"
-            class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+            class="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20 transition font-medium text-sm sm:text-base"
           >
             Annuler
+          </button>
+          <button
+            @click="resetGameAndScores(); showResetAllModal = false"
+            class="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-400 transition shadow-[0_0_20px_rgba(239,68,68,0.3)] text-sm sm:text-base"
+          >
+            Oui, tout réinitialiser
           </button>
         </div>
       </div>
     </div>
 
-    <div class="mt-12 pt-8 border-t border-gray-700 text-sm text-gray-500">
-      <a href="index.html" class="text-neon-cyan hover:underline">Vue Joueur</a>
-      <span class="mx-2">·</span>
-      <a href="tv.html" class="text-neon-cyan hover:underline">Vue TV</a>
+    <div class="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10 text-xs sm:text-sm text-gray-500 flex flex-wrap gap-x-2 gap-y-1 safe-bottom">
+      <a href="index.html" class="text-neon-cyan hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.5)] transition">Vue Joueur</a>
+      <span>·</span>
+      <a href="tv.html" class="text-neon-cyan hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.5)] transition">Vue TV</a>
     </div>
   </div>
 

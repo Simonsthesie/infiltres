@@ -6,6 +6,7 @@
   <title>Infiltré — Vue TV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/animations.css">
   <script>
     tailwind.config = {
@@ -13,94 +14,93 @@
       theme: {
         extend: {
           colors: {
-            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff' }
-          }
+            neon: { green: '#00ff88', pink: '#ff0080', cyan: '#00d4ff', amber: '#ffb800' }
+          },
+          fontFamily: { display: ['Orbitron', 'sans-serif'], body: ['Outfit', 'system-ui', 'sans-serif'] }
         }
       }
     }
   </script>
   <style>
-    body { background: #0a0a0f; }
+    body { background: #050508; }
     .font-mono { font-family: ui-monospace, monospace; }
   </style>
 </head>
-<body class="min-h-screen bg-[#0a0a0f] text-gray-100 overflow-hidden">
-  <div id="app" class="min-h-screen flex flex-col p-6 md:p-10">
-    <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold text-neon-green">Infiltré</h1>
-      <p class="text-lg text-gray-300 max-w-2xl">{{ statusMessage }}</p>
-      <div class="font-mono text-2xl md:text-4xl text-neon-cyan tabular-nums">
-        {{ formattedTimer }}
-      </div>
+<body class="min-h-screen text-gray-100 overflow-x-hidden font-body antialiased safe-top safe-bottom">
+  <div id="app" class="min-h-screen flex flex-col p-4 sm:p-6 md:p-8 lg:p-10 box-border overflow-x-hidden">
+    <header class="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <h1 class="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-gradient-hero order-1 sm:order-none">Infiltré</h1>
+      <p class="text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl text-center sm:text-left order-3 sm:order-2 w-full sm:w-auto sm:max-w-xl">{{ statusMessage }}</p>
+      <div class="timer-display font-mono text-2xl sm:text-3xl md:text-5xl tabular-nums order-2 sm:order-3"> {{ formattedTimer }}</div>
     </header>
 
     <!-- Bannière Mission en cours -->
     <section
       v-if="isMissionActive"
-      class="mb-8 p-6 rounded-xl bg-neon-green/10 border-2 border-neon-green text-center"
+      class="banner-mission mb-6 sm:mb-8 p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl text-center"
     >
-      <p class="text-neon-green font-bold text-xl md:text-2xl mb-2">Mission en cours</p>
-      <p class="text-gray-300 mb-2">{{ gameState.stateMessage }}</p>
-      <p class="font-mono text-3xl md:text-4xl text-neon-cyan">{{ formattedTimer }}</p>
+      <p class="text-neon-green font-display font-bold text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2 uppercase tracking-wider">Mission en cours</p>
+      <p class="text-gray-300 text-sm sm:text-base mb-2 sm:mb-3">{{ gameState.stateMessage }}</p>
+      <p class="timer-display font-mono text-3xl sm:text-4xl md:text-5xl">{{ formattedTimer }}</p>
     </section>
 
     <!-- Joueurs connectés -->
-    <section class="mb-8">
-      <h2 class="text-xl text-neon-cyan mb-4">Joueurs connectés ({{ players.length }})</h2>
+    <section class="mb-6 sm:mb-8">
+      <h2 class="section-title">Joueurs connectés ({{ players.length }})</h2>
       <div class="flex flex-wrap gap-2">
         <span
           v-for="p in players"
           :key="p.id"
-          class="px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white"
+          class="badge-player px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-white text-sm sm:text-base font-medium"
         >
           {{ p.name }}
         </span>
       </div>
-      <p v-if="players.length === 0" class="text-gray-500">Aucun joueur pour l'instant.</p>
+      <p v-if="players.length === 0" class="text-gray-500 text-sm">Aucun joueur pour l'instant.</p>
     </section>
 
-    <section class="mb-8">
-      <h2 class="text-xl text-neon-pink mb-4">Classement</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    <section class="mb-6 sm:mb-8">
+      <h2 class="section-title section-title-pink">Classement</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
         <div
           v-for="(entry, index) in leaderboardList"
           :key="entry.name + index"
-          class="flex items-center justify-between p-4 rounded-lg bg-gray-800/60 border border-gray-700"
+          class="leaderboard-row flex items-center justify-between p-3 sm:p-4 gap-2"
         >
-          <span class="font-medium text-white">{{ entry.name || 'Joueur' }}</span>
-          <div class="flex gap-4 text-sm">
+          <span class="font-semibold text-white text-sm sm:text-base truncate min-w-0">{{ entry.name || 'Joueur' }}</span>
+          <div class="flex gap-2 sm:gap-4 text-xs sm:text-sm font-medium shrink-0">
             <span class="text-neon-green">✓ {{ entry.score || 0 }}</span>
             <span class="text-neon-pink">🍺 {{ entry.gages || 0 }}</span>
           </div>
         </div>
       </div>
-      <p v-if="leaderboardList.length === 0" class="text-gray-500">Aucun score pour l'instant.</p>
+      <p v-if="leaderboardList.length === 0" class="text-gray-500 text-sm">Aucun score pour l'instant.</p>
     </section>
 
-    <!-- Pop-up RÉVÉLATION : mission terminée, que l'agent se dénonce -->
+    <!-- Pop-up RÉVÉLATION -->
     <div
       v-show="showRevealPopup"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto safe-top safe-bottom"
       @click.self="closeRevealPopup"
     >
       <div
-        class="reveal-popup max-w-2xl w-full p-8 md:p-12 rounded-2xl bg-gray-900 border-2 border-neon-green shadow-2xl"
+        class="reveal-popup glass-card w-full max-w-2xl my-auto p-5 sm:p-8 md:p-12 rounded-xl sm:rounded-2xl border-2 border-neon-green/60 shadow-[0_0_80px_rgba(0,255,136,0.25)]"
         :class="{ 'reveal-trigger': revealTrigger }"
       >
-        <p class="text-neon-pink text-sm uppercase tracking-wider mb-2">Temps écoulé</p>
-        <p class="text-2xl md:text-3xl font-bold text-neon-green mb-6">La mission est terminée !</p>
-        <p class="text-xl text-white mb-8">Que l'agent se dénonce !</p>
-        <p class="text-gray-400 text-sm mb-2">L'agent était</p>
-        <p class="reveal-agent-name text-xl font-bold text-neon-cyan mb-4">
+        <p class="text-neon-pink font-display text-xs sm:text-sm uppercase tracking-widest mb-1 sm:mb-2">Temps écoulé</p>
+        <p class="font-display text-xl sm:text-2xl md:text-3xl font-bold text-neon-green mb-4 sm:mb-6">La mission est terminée !</p>
+        <p class="text-base sm:text-xl text-white mb-6 sm:mb-8">Que l'agent se dénonce !</p>
+        <p class="text-gray-400 text-xs sm:text-sm mb-1">L'agent était</p>
+        <p class="reveal-agent-name text-lg sm:text-xl font-bold text-neon-cyan mb-3 sm:mb-4 drop-shadow-[0_0_12px_rgba(0,212,255,0.5)] break-words">
           {{ gameState.agentName || '—' }}
         </p>
-        <p class="text-gray-400 text-sm mb-2">Sa mission était</p>
-        <p class="reveal-mission text-lg text-gray-300 leading-relaxed mb-6">
+        <p class="text-gray-400 text-xs sm:text-sm mb-1">Sa mission était</p>
+        <p class="reveal-mission text-base sm:text-lg text-gray-300 leading-relaxed mb-4 sm:mb-6 break-words">
           {{ gameState.mission || '—' }}
         </p>
         <button
           @click="closeRevealPopup"
-          class="px-6 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition"
+          class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20 hover:border-neon-cyan/50 transition font-medium text-sm sm:text-base"
         >
           Fermer
         </button>
