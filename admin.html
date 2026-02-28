@@ -72,12 +72,6 @@
           >
             Tout réinitialiser (partie + scores)
           </button>
-          <button
-            @click="confirmNewGame()"
-            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30 transition font-medium text-sm sm:text-base"
-          >
-            Nouvelle partie
-          </button>
         </div>
       </template>
 
@@ -144,6 +138,17 @@
           </button>
         </div>
       </template>
+    </section>
+
+    <!-- Toujours visible : Nouvelle partie -->
+    <section class="mt-6 pt-6 border-t border-white/10">
+      <p class="text-gray-500 text-xs sm:text-sm mb-3">Recommencer de zéro (tous les joueurs et scores effacés).</p>
+      <button
+        @click="confirmNewGame()"
+        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30 transition font-medium text-sm sm:text-base"
+      >
+        Nouvelle partie
+      </button>
     </section>
 
     <!-- Modal Tout réinitialiser -->
