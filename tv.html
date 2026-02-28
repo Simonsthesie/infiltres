@@ -34,6 +34,14 @@
       <div class="timer-display font-mono text-2xl sm:text-3xl md:text-5xl tabular-nums order-2 sm:order-3"> {{ formattedTimer }}</div>
     </header>
 
+    <!-- QR code pour rejoindre -->
+    <section class="mb-6 sm:mb-8 flex flex-col items-center">
+      <h2 class="section-title section-title-green mb-2">Rejoindre la partie</h2>
+      <p class="text-gray-400 text-xs sm:text-sm mb-3">Scannez pour ouvrir la page joueur</p>
+      <div ref="qrcodeContainer" class="p-3 rounded-xl bg-white"></div>
+      <p class="text-gray-400 text-xs mt-3 break-all max-w-xs text-center font-mono">{{ joinUrl }}</p>
+    </section>
+
     <!-- Bannière Mission en cours -->
     <section
       v-if="isMissionActive"
@@ -113,6 +121,7 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     const { createApp } = Vue;
 
@@ -126,7 +135,8 @@
           serverTimeOffset: 0,
           now: Date.now(),
           showRevealPopup: false,
-          revealTrigger: false
+          revealTrigger: false,
+          joinUrl: ''
         };
       },
       computed: {
@@ -197,6 +207,19 @@
         }
       },
       mounted() {
+        const path = window.location.pathname.replace(/\/[^/]*$/, '') || '/';
+        this.joinUrl = window.location.origin + (path.endsWith('/') ? path : path + '/') + 'index.html';
+
+        this.$nextTick(() => {
+          if (this.$refs.qrcodeContainer && typeof QRCode !== 'undefined') {
+            new QRCode(this.$refs.qrcodeContainer, {
+              text: this.joinUrl,
+              width: 180,
+              height: 180
+            });
+          }
+        });
+
         const db = typeof FIREBASE_DB !== 'undefined' ? FIREBASE_DB : (window.FIREBASE_DB);
         if (db && db.ref) {
           db.ref('.info/serverTimeOffset').on('value', (snap) => {

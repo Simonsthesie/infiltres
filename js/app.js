@@ -72,7 +72,7 @@
       targetName: null,
       revealAt: null,
       startedAt: null,
-      durationSeconds: 30,
+      durationSeconds: 30 * 60,
       durationMinutes: 30,
       resolution: null,
       grillWinner: null,
@@ -112,7 +112,7 @@
   async function startInfiltration(agentId, agentName, players) {
     await loadMissions();
     const { mission, targetName } = pickRandomMission(players, agentId);
-    const durationSeconds = 30;
+    const durationSeconds = 30 * 60;
     const current = await gameRef().once('value').then(s => s.val());
     const leaderboard = (current && current.leaderboard) ? current.leaderboard : {};
     const ServerTimestamp = global.firebase && global.firebase.database && global.firebase.database.ServerValue && global.firebase.database.ServerValue.TIMESTAMP;
