@@ -44,9 +44,8 @@
           ></span>
           <div class="min-w-0 flex-1">
             <p class="font-medium text-white truncate text-sm">{{ entry.name || 'Joueur' }}</p>
-            <p class="text-xs text-gray-400 flex gap-3">
+            <p v-if="(entry.score || 0) > 0" class="text-xs text-gray-400 flex gap-3">
               <span class="text-neon-green">✓ {{ entry.score || 0 }}</span>
-              <span class="text-neon-pink">🍺 {{ entry.gages || 0 }}</span>
             </p>
           </div>
         </div>

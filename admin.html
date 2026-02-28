@@ -72,6 +72,12 @@
           >
             Tout réinitialiser (partie + scores)
           </button>
+          <button
+            @click="confirmNewGame()"
+            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30 transition font-medium text-sm sm:text-base"
+          >
+            Nouvelle partie
+          </button>
         </div>
       </template>
 
@@ -166,6 +172,32 @@
       </div>
     </div>
 
+    <!-- Modal Nouvelle partie -->
+    <div
+      v-if="showNewGameModal"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm safe-bottom overflow-y-auto"
+      @click.self="showNewGameModal = false"
+    >
+      <div class="glass-card w-full sm:max-w-md p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl border-2 border-amber-500/50 shadow-[0_0_60px_rgba(245,158,11,0.2)]">
+        <h3 class="font-display text-lg sm:text-xl font-bold text-amber-400 mb-3 sm:mb-4">Nouvelle partie ?</h3>
+        <p class="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">Tous les joueurs et tous les scores seront effacés. La partie repassera en attente. Les joueurs devront se réinscrire pour rejoindre.</p>
+        <div class="flex flex-col-reverse sm:flex-row gap-3">
+          <button
+            @click="showNewGameModal = false"
+            class="flex-1 py-2.5 rounded-xl bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20 transition font-medium text-sm sm:text-base"
+          >
+            Annuler
+          </button>
+          <button
+            @click="newGame()"
+            class="flex-1 py-2.5 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition shadow-[0_0_20px_rgba(245,158,11,0.3)] text-sm sm:text-base"
+          >
+            Oui, nouvelle partie
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10 text-xs sm:text-sm text-gray-500 flex flex-wrap gap-x-2 gap-y-1 safe-bottom">
       <a href="index.html" class="text-neon-cyan hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.5)] transition">Vue Joueur</a>
       <span>·</span>
@@ -186,7 +218,8 @@
         return {
           players: [],
           gameState: {},
-          showResetAllModal: false
+          showResetAllModal: false,
+          showNewGameModal: false
         };
       },
       mounted() {
@@ -219,6 +252,13 @@
         },
         confirmResetAll() {
           this.showResetAllModal = true;
+        },
+        confirmNewGame() {
+          this.showNewGameModal = true;
+        },
+        newGame() {
+          InfiltreGame.newGame();
+          this.showNewGameModal = false;
         },
         resetGameAndScores() {
           InfiltreGame.resetGameAndScores();

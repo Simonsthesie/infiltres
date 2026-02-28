@@ -223,8 +223,6 @@
     if (agentName) agentEntry.name = agentName;
     if (success) {
       agentEntry.score = (agentEntry.score || 0) + 1;
-    } else {
-      agentEntry.gages = (agentEntry.gages || 0) + 1;
     }
     nextLeaderboard[key] = agentEntry;
 
@@ -296,6 +294,10 @@
     return gameRef().set(getInitialGameState());
   }
 
+  function newGame() {
+    return gameRef().set(getInitialGameState()).then(() => playersRef().remove());
+  }
+
   global.InfiltreGame = {
     STATES,
     STATE_MESSAGES,
@@ -317,6 +319,7 @@
     getGameState,
     resetGame,
     resetGameAndScores,
+    newGame,
     checkRevealTimeout,
     REVEAL_TIMEOUT_MS
   };

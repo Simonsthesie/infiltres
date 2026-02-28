@@ -80,7 +80,7 @@ Pour la prod, restreindre lecture/écriture selon vos besoins (par ex. par parti
 | **IDLE** | Attente des joueurs. L’admin peut choisir un agent. |
 | **INFILTRATION** | Un agent est désigné, mission attribuée, chrono (ex. 30 min). |
 | **REVEAL** | Révélation sur la TV : « L’agent était [NOM], sa mission était [MISSION] ». |
-| **RESOLUTION** | L’admin clique Succès ou Échec → points et gages, puis retour à IDLE. |
+| **RESOLUTION** | L’admin clique Succès ou Échec → points, puis retour à IDLE. |
 
 ---
 
