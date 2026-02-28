@@ -50,8 +50,9 @@
     const missions = missionsCache.length ? missionsCache : [];
     const raw = missions[Math.floor(Math.random() * missions.length)];
     const missionText = typeof raw === 'string' ? raw : (raw && raw.text) || 'Mission secrète';
+    const category = (raw && typeof raw === 'object' && raw.category) ? raw.category : null;
     const resolved = resolveMissionText(missionText, target?.name);
-    return { mission: resolved, targetId: target?.id || null, targetName: target?.name || null };
+    return { mission: resolved, targetId: target?.id || null, targetName: target?.name || null, missionCategory: category };
   }
 
   function gameRef() {
@@ -69,6 +70,7 @@
       agentId: null,
       agentName: null,
       mission: null,
+      missionCategory: null,
       targetName: null,
       revealAt: null,
       startedAt: null,
@@ -111,7 +113,7 @@
 
   async function startInfiltration(agentId, agentName, players) {
     await loadMissions();
-    const { mission, targetName } = pickRandomMission(players, agentId);
+    const { mission, targetName, missionCategory } = pickRandomMission(players, agentId);
     const durationSeconds = 30 * 60;
     const current = await gameRef().once('value').then(s => s.val());
     const leaderboard = (current && current.leaderboard) ? current.leaderboard : {};
@@ -123,6 +125,7 @@
       agentId,
       agentName,
       mission,
+      missionCategory: missionCategory || null,
       targetName: targetName || null,
       startedAt: ServerTimestamp || Date.now(),
       durationSeconds,

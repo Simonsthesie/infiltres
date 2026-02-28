@@ -44,6 +44,7 @@
 
     <section v-if="gameState.agentId" class="glass-card mb-6 sm:mb-8 p-4 sm:p-5 rounded-lg sm:rounded-xl border border-neon-cyan/20">
       <h2 class="section-title section-title-green mb-2">Mission en cours</h2>
+      <p v-if="gameState.missionCategory" class="text-neon-amber text-sm font-medium mb-1">{{ gameState.missionCategory }}</p>
       <p class="text-gray-300 text-base sm:text-lg break-words">{{ gameState.mission || '—' }}</p>
       <p v-if="gameState.targetName" class="text-sm text-gray-500 mt-2">Cible : {{ gameState.targetName }}</p>
     </section>

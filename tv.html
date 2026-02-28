@@ -27,20 +27,40 @@
   </style>
 </head>
 <body class="min-h-screen text-gray-100 overflow-x-hidden font-body antialiased safe-top safe-bottom">
-  <div id="app" class="min-h-screen flex flex-col p-4 sm:p-6 md:p-8 lg:p-10 box-border overflow-x-hidden">
+  <div id="app" class="min-h-screen flex flex-row overflow-x-hidden">
+    <!-- Colonne gauche : joueurs par score + pastille connecté / non connecté -->
+    <aside class="w-64 sm:w-72 shrink-0 border-r border-white/10 flex flex-col bg-black/20 safe-top">
+      <h2 class="section-title px-4 pt-4 pb-2">Joueurs</h2>
+      <div class="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
+        <div
+          v-for="(entry, index) in playersOrderedByScore"
+          :key="(entry.name || '') + index"
+          class="flex items-center gap-2 py-2 px-3 rounded-lg border border-white/5 hover:border-neon-cyan/20 transition"
+        >
+          <span
+            class="shrink-0 w-2.5 h-2.5 rounded-full"
+            :class="entry.connected ? 'bg-neon-green shadow-[0_0_8px_rgba(0,255,136,0.6)]' : 'bg-red-500'"
+            :title="entry.connected ? 'Connecté' : 'Déconnecté'"
+          ></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-white truncate text-sm">{{ entry.name || 'Joueur' }}</p>
+            <p class="text-xs text-gray-400 flex gap-3">
+              <span class="text-neon-green">✓ {{ entry.score || 0 }}</span>
+              <span class="text-neon-pink">🍺 {{ entry.gages || 0 }}</span>
+            </p>
+          </div>
+        </div>
+        <p v-if="playersOrderedByScore.length === 0" class="text-gray-500 text-sm py-4">Aucun joueur.</p>
+      </div>
+    </aside>
+
+    <!-- Zone principale -->
+    <main class="flex-1 flex flex-col min-w-0 p-4 sm:p-6 md:p-8 lg:p-10">
     <header class="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
       <h1 class="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-gradient-hero order-1 sm:order-none">Infiltré</h1>
       <p class="text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl text-center sm:text-left order-3 sm:order-2 w-full sm:w-auto sm:max-w-xl">{{ statusMessage }}</p>
-      <div class="timer-display font-mono text-2xl sm:text-3xl md:text-5xl tabular-nums order-2 sm:order-3"> {{ formattedTimer }}</div>
+      <div class="timer-display font-mono text-2xl sm:text-3xl md:text-5xl tabular-nums order-2 sm:order-3">{{ timerDisplay }}</div>
     </header>
-
-    <!-- QR code pour rejoindre -->
-    <section class="mb-6 sm:mb-8 flex flex-col items-center">
-      <h2 class="section-title section-title-green mb-2">Rejoindre la partie</h2>
-      <p class="text-gray-400 text-xs sm:text-sm mb-3">Scannez pour ouvrir la page joueur</p>
-      <div ref="qrcodeContainer" class="p-3 rounded-xl bg-white"></div>
-      <p class="text-gray-400 text-xs mt-3 break-all max-w-xs text-center font-mono">{{ joinUrl }}</p>
-    </section>
 
     <!-- Bannière Mission en cours -->
     <section
@@ -52,38 +72,14 @@
       <p class="timer-display font-mono text-3xl sm:text-4xl md:text-5xl">{{ formattedTimer }}</p>
     </section>
 
-    <!-- Joueurs connectés -->
-    <section class="mb-6 sm:mb-8">
-      <h2 class="section-title">Joueurs connectés ({{ players.length }})</h2>
-      <div class="flex flex-wrap gap-2">
-        <span
-          v-for="p in players"
-          :key="p.id"
-          class="badge-player px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-white text-sm sm:text-base font-medium"
-        >
-          {{ p.name }}
-        </span>
-      </div>
-      <p v-if="players.length === 0" class="text-gray-500 text-sm">Aucun joueur pour l'instant.</p>
-    </section>
+    <p v-if="!isMissionActive && leaderboardList.length > 0" class="text-gray-500 text-sm">En attente de la prochaine mission...</p>
 
-    <section class="mb-6 sm:mb-8">
-      <h2 class="section-title section-title-pink">Classement</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
-        <div
-          v-for="(entry, index) in leaderboardList"
-          :key="entry.name + index"
-          class="leaderboard-row flex items-center justify-between p-3 sm:p-4 gap-2"
-        >
-          <span class="font-semibold text-white text-sm sm:text-base truncate min-w-0">{{ entry.name || 'Joueur' }}</span>
-          <div class="flex gap-2 sm:gap-4 text-xs sm:text-sm font-medium shrink-0">
-            <span class="text-neon-green">✓ {{ entry.score || 0 }}</span>
-            <span class="text-neon-pink">🍺 {{ entry.gages || 0 }}</span>
-          </div>
-        </div>
-      </div>
-      <p v-if="leaderboardList.length === 0" class="text-gray-500 text-sm">Aucun score pour l'instant.</p>
-    </section>
+    <!-- QR code en bas à droite -->
+    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end gap-1 safe-bottom">
+      <div ref="qrcodeContainer" class="p-2 rounded-xl bg-white shadow-lg border border-white/20"></div>
+      <p class="text-gray-500 text-xs font-mono max-w-[140px] text-right">Rejoindre</p>
+    </div>
+  </main>
 
     <!-- Pop-up RÉVÉLATION -->
     <div
@@ -103,6 +99,7 @@
           {{ gameState.agentName || '—' }}
         </p>
         <p class="text-gray-400 text-xs sm:text-sm mb-1">Sa mission était</p>
+        <p v-if="gameState.missionCategory" class="text-neon-amber text-xs sm:text-sm font-medium mb-1">{{ gameState.missionCategory }}</p>
         <p class="reveal-mission text-base sm:text-lg text-gray-300 leading-relaxed mb-4 sm:mb-6 break-words">
           {{ gameState.mission || '—' }}
         </p>
@@ -136,7 +133,8 @@
           now: Date.now(),
           showRevealPopup: false,
           revealTrigger: false,
-          joinUrl: ''
+          joinUrl: '',
+          timerDisplay: '--:--'
         };
       },
       computed: {
@@ -164,6 +162,13 @@
             byKey[key].gages += (v && v.gages) || 0;
           }
           return Object.values(byKey).sort((a, b) => (b.score || 0) - (a.score || 0));
+        },
+        playersOrderedByScore() {
+          const connectedNames = new Set(this.players.map(p => (p.name && String(p.name).trim()) || '').filter(Boolean));
+          return this.leaderboardList.map(entry => ({
+            ...entry,
+            connected: connectedNames.has((entry.name && String(entry.name).trim()) || '')
+          }));
         },
         formattedTimer() {
           const state = this.gameState.state;
@@ -204,7 +209,10 @@
             this.showRevealPopup = false;
             this.revealTrigger = false;
           }
-        }
+          this.timerDisplay = this.formattedTimer;
+        },
+        'gameState.revealAt'() { this.timerDisplay = this.formattedTimer; },
+        'gameState.remainingSeconds'() { this.timerDisplay = this.formattedTimer; }
       },
       mounted() {
         const path = window.location.pathname.replace(/\/[^/]*$/, '') || '/';
@@ -214,8 +222,8 @@
           if (this.$refs.qrcodeContainer && typeof QRCode !== 'undefined') {
             new QRCode(this.$refs.qrcodeContainer, {
               text: this.joinUrl,
-              width: 180,
-              height: 180
+              width: 120,
+              height: 120
             });
           }
         });
@@ -233,8 +241,10 @@
         InfiltreGame.onPlayers((list) => {
           this.players = list || [];
         });
+        this.timerDisplay = this.formattedTimer;
         this.timerInterval = setInterval(() => {
           this.now = Date.now();
+          this.timerDisplay = this.formattedTimer;
           const revealAt = this.effectiveRevealAt;
           const serverNow = this.now + (this.serverTimeOffset || 0);
           if (this.gameState.state === InfiltreGame.STATES.INFILTRATION && revealAt != null && serverNow >= revealAt) {

@@ -62,6 +62,7 @@
         <p class="text-neon-green text-xs sm:text-sm font-display font-semibold uppercase tracking-wider">Tu es l'agent</p>
         <div class="glass-card p-5 sm:p-8 rounded-xl sm:rounded-2xl border-2 border-neon-green/50 animate-pulse-glow shadow-[0_0_40px_rgba(0,255,136,0.15)]">
           <p class="text-neon-green font-display font-bold text-base sm:text-lg mb-2 sm:mb-3 uppercase tracking-wide">Ta mission secrète</p>
+          <p v-if="gameState.missionCategory" class="text-neon-amber text-xs sm:text-sm font-medium mb-2">{{ gameState.missionCategory }}</p>
           <p class="text-base sm:text-xl text-white leading-relaxed break-words">{{ gameState.mission || '—' }}</p>
         </div>
         <p class="text-gray-500 text-xs sm:text-sm">Ne te fais pas repérer. La révélation aura lieu à l'écran.</p>
